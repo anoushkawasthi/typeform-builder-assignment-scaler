@@ -235,9 +235,11 @@ export function BuilderScreen({ formId }: { formId: number }) {
             {isDesignOpen && <DesignPanel form={form} onUpdate={editor.updateForm} onClose={() => setIsDesignOpen(false)} />}
           </div>
 
-          {/* The work area. The canvas sits a fixed distance below the toolbar, as in
-              Typeform, rather than being centred. */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-4 pt-[min(104px,10vh)]">
+          {/* The work area. The canvas is centred in it. Typeform keeps a 70px strip
+              under the canvas for its AI chat box; we leave the same strip empty so the
+              canvas sits at the same height. `-mt-3` cancels the column's gap: Typeform's
+              work area starts right under the toolbar. */}
+          <div className="-mt-3 flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-[70px]">
             {showsWelcome ? (
               <WelcomeCanvas form={form} onUpdate={editor.updateForm} />
             ) : selectedQuestion === undefined ? (

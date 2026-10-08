@@ -10,10 +10,11 @@
  * Depended on by: builder-screen.tsx.
  */
 
-import { FormTheme } from "@/components/respondent/form-theme";
 import { WelcomeScreen } from "@/components/respondent/welcome-screen";
 import { AutosaveText } from "@/components/ui/autosave-text";
 import type { FormDetail, FormUpdate } from "@/lib/types";
+
+import { CanvasFrame } from "./canvas-frame";
 
 interface WelcomeCanvasProps {
   form: FormDetail;
@@ -22,12 +23,8 @@ interface WelcomeCanvasProps {
 
 export function WelcomeCanvas({ form, onUpdate }: WelcomeCanvasProps) {
   return (
-    // Same framed, three-quarter-size box as the question canvas (question-canvas.tsx).
-    <FormTheme
-      theme={form.theme}
-      className="mx-auto flex min-h-[475px] w-full max-w-[842px] items-center justify-center border border-admin-border-soft px-12 py-12 lg:px-[125px]"
-    >
-      <div className="w-full" style={{ zoom: 0.75 }}>
+    // The same frame and scaling as the question canvas (canvas-frame.tsx).
+    <CanvasFrame theme={form.theme}>
         <WelcomeScreen
           title={form.welcome_title}
           text={form.welcome_text}
@@ -51,11 +48,10 @@ export function WelcomeCanvas({ form, onUpdate }: WelcomeCanvasProps) {
               ariaLabel="Welcome description"
               allowLineBreaks
               allowFormatting
-              className="mt-2 text-center text-[18px] leading-[26px] text-form-question-80 placeholder:italic @2xl:text-[20px]"
+              className="mt-2 text-center text-[16px] leading-[22px] text-form-question placeholder:italic @2xl:text-[18px] @2xl:leading-6"
             />
           }
         />
-      </div>
-    </FormTheme>
+    </CanvasFrame>
   );
 }

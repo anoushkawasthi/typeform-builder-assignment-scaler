@@ -6,9 +6,9 @@
  * What it does:   draws the selected question exactly as a respondent will see it, in
  *                 the form's own theme, with the title, description and choices
  *                 editable in place. This is the "live preview" of the brief.
- * Depends on:     respondent/question-screen.tsx and respondent/form-theme.tsx (the same
- *                 components the public form uses), choice-editor.tsx,
- *                 ui/autosave-text.tsx.
+ * Depends on:     respondent/question-screen.tsx (the same component the public form
+ *                 uses), canvas-frame.tsx (the frame and its scaling),
+ *                 choice-editor.tsx, ui/autosave-text.tsx.
  * Depended on by: builder-screen.tsx.
  *
  * Because it renders through QuestionScreen, a change to how a question looks on the
@@ -16,11 +16,11 @@
  */
 
 import { AutosaveText } from "@/components/ui/autosave-text";
-import { FormTheme } from "@/components/respondent/form-theme";
 import { QuestionScreen } from "@/components/respondent/question-screen";
 import { isChoiceType } from "@/lib/question-types";
 import type { Question, QuestionUpdate, Theme } from "@/lib/types";
 
+import { CanvasFrame } from "./canvas-frame";
 import { ChoiceEditor } from "./choice-editor";
 
 interface QuestionCanvasProps {
@@ -50,15 +50,8 @@ export function QuestionCanvas({
   onOpenLogic,
 }: QuestionCanvasProps) {
   return (
-    // Typeform shows the question in a fixed-shape "screen" centred in the white work
-    // area, rather than stretching it to fill the column.
-    <FormTheme
-      theme={theme}
-      className="mx-auto flex min-h-[475px] w-full max-w-[842px] items-center justify-center border border-admin-border-soft px-12 py-12 lg:px-[125px]"
-    >
-      {/* Typeform draws the canvas at three-quarter size, so a whole question fits in
-          the box. `zoom` scales the content and its layout together. */}
-      <div className="w-full" style={{ zoom: 0.75 }}>
+    // The frame and its scaling are shared with the welcome screen (canvas-frame.tsx).
+    <CanvasFrame theme={theme}>
         <QuestionScreen
           // A new key per question gives each one fresh text boxes, so text typed in one
           // question can never show up in another when the selection changes.
@@ -90,7 +83,7 @@ export function QuestionCanvas({
               ariaLabel="Question description"
               allowLineBreaks
               allowFormatting
-              className="mt-2 text-[16px] leading-[24px] text-form-question-80 placeholder:italic sm:text-[18px]"
+              className="text-[16px] leading-[24px] text-form-question-80 placeholder:italic @2xl:text-[18px]"
             />
           }
           // Choice questions swap the answer for an editor; every other type shows the
@@ -108,7 +101,6 @@ export function QuestionCanvas({
             ) : undefined
           }
         />
-      </div>
-    </FormTheme>
+    </CanvasFrame>
   );
 }

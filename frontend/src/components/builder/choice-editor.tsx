@@ -7,7 +7,8 @@
  *                 choice reveals a drag handle on its left (to reorder) and round
  *                 buttons on its right (remove; open branching). "Add choice" is a link
  *                 underneath.
- * Depends on:     @dnd-kit (drag and drop), ui/autosave-text.tsx, lib/types.ts.
+ * Depends on:     @dnd-kit (drag and drop), ui/autosave-text.tsx, lib/types.ts,
+ *                 canvas-frame.tsx (the scale the canvas is drawn at).
  * Depended on by: question-canvas.tsx.
  *
  * Each edit is its own request (add one, rename one, remove one, reorder). Sending the
@@ -19,10 +20,12 @@ import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GitBranch, GripVertical, X } from "lucide-react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 
 import { AutosaveText } from "@/components/ui/autosave-text";
 import type { Choice } from "@/lib/types";
+
+import { CanvasScaleContext } from "./canvas-frame";
 
 interface ChoiceEditorProps {
   choices: Choice[];
@@ -33,19 +36,6 @@ interface ChoiceEditorProps {
   /** Open the Logic dialog, where a rule can be attached to a choice. */
   onOpenLogic: () => void;
 }
-
-// The canvas draws its content at this scale (see question-canvas.tsx).
-const CANVAS_ZOOM = 0.75;
-
-/**
- * dnd-kit measures how far the pointer moved in real screen pixels, but the dragged
- * choice lives inside the zoomed canvas, where one CSS pixel is only 0.75 of a screen
- * pixel. Without this correction the choice would trail behind the pointer.
- */
-const compensateForCanvasZoom: Modifier = ({ transform }) => ({
-  ...transform,
-  y: transform.y / CANVAS_ZOOM,
-});
 
 function letterForIndex(index: number): string {
   return String.fromCharCode("A".charCodeAt(0) + index);
@@ -58,6 +48,16 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, on
   // After "Add choice" the new box should take focus. We remember how many choices
   // there were when the button was pressed; the first box beyond that count is new.
   const [focusFromIndex, setFocusFromIndex] = useState<number | null>(null);
+
+  // The canvas may draw its content smaller than life (see canvas-frame.tsx). dnd-kit
+  // measures how far the pointer moved in real screen pixels, but the dragged choice
+  // lives inside the scaled canvas, where one CSS pixel is less than a screen pixel.
+  // Without this correction the choice would trail behind the pointer.
+  const canvasScale = useContext(CanvasScaleContext);
+  const compensateForCanvasScale: Modifier = ({ transform }) => ({
+    ...transform,
+    y: transform.y / canvasScale,
+  });
 
   // A drag starts only after 5px of movement, so a click on the handle does nothing.
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -88,7 +88,7 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, on
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis, compensateForCanvasZoom]}
+        modifiers={[restrictToVerticalAxis, compensateForCanvasScale]}
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={choices.map((choice) => choice.id)} strategy={verticalListSortingStrategy}>
