@@ -257,8 +257,9 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
           questions overlap while they cross-fade instead of pushing each other around. */}
       <main className="grid h-full grid-cols-1 grid-rows-1 overflow-y-auto overflow-x-hidden">
         {/* `custom` hands the direction to the exit animation of a question that is
-            already leaving; `initial={false}` skips the animation on first load. */}
-        <AnimatePresence initial={false} custom={direction}>
+            already leaving. The very first screen animates in too, so the form arrives
+            with the same rise-and-fade as every later question. */}
+        <AnimatePresence custom={direction}>
           <motion.div
             key={isFinished ? "thank-you" : isOnWelcome ? "welcome" : questions[currentIndex].id}
             custom={direction}
@@ -303,6 +304,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
       <FlowFooter
         showNavigation={!isFinished && !isOnWelcome}
         canGoBack={currentIndex > 0}
+        isFinished={isFinished}
         onPrevious={goBack}
         onNext={advance}
       />

@@ -128,3 +128,16 @@ summary {
 .animate-choice-blink {
   animation: choice-blink 0.4s linear;
 }
+
+/* The bar on the public form's loading screen: it fills from left to right once. */
+@keyframes loading-bar {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+.animate-loading-bar {
+  animation: loading-bar 0.9s ease-in-out forwards;
+}

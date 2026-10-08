@@ -33,6 +33,8 @@ interface QuestionCanvasProps {
   onAddChoice: () => void;
   onRenameChoice: (choiceId: number, label: string) => void;
   onRemoveChoice: (choiceId: number) => void;
+  onReorderChoices: (choiceIds: number[]) => void;
+  onOpenLogic: () => void;
 }
 
 export function QuestionCanvas({
@@ -44,6 +46,8 @@ export function QuestionCanvas({
   onAddChoice,
   onRenameChoice,
   onRemoveChoice,
+  onReorderChoices,
+  onOpenLogic,
 }: QuestionCanvasProps) {
   return (
     // Typeform shows the question in a fixed-shape "screen" centred in the white work
@@ -98,6 +102,8 @@ export function QuestionCanvas({
                 onAdd={onAddChoice}
                 onRename={onRenameChoice}
                 onRemove={onRemoveChoice}
+                onReorder={onReorderChoices}
+                onOpenLogic={onOpenLogic}
               />
             ) : undefined
           }

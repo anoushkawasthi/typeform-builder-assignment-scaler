@@ -69,6 +69,7 @@ export function WorkflowScreen({ formId }: { formId: number }) {
         formId={formId}
         formTitle={form?.title ?? "..."}
         activeSection="workflow"
+        hasBeenPublished={(form?.published_at ?? null) !== null}
         onRename={(title) => editor.updateForm({ title })}
       />
 

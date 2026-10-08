@@ -279,6 +279,39 @@ def create_choice(
     return presenters.present_form_detail(db, form)
 
 
+@router.put("/questions/{question_id}/choices/order", response_model=schemas.FormDetailOut)
+def reorder_choices(
+    question_id: int,
+    body: schemas.ChoiceOrderIn,
+    db: Session = Depends(get_db),
+    creator: Creator = Depends(get_current_creator),
+):
+    """
+    Save a new order of a question's choices after a drag-and-drop. Like reordering
+    questions, the request must list every choice exactly once.
+    """
+    question = get_question_or_404(db, question_id, creator)
+    form = question.form
+    current = snapshot.active_choices(question)
+
+    if sorted(body.choice_ids) != sorted(choice.id for choice in current):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="choice_ids must contain every choice of this question exactly once",
+        )
+
+    choice_by_id = {choice.id: choice for choice in current}
+    for position, choice_id in enumerate(body.choice_ids):
+        choice_by_id[choice_id].position = position
+
+    snapshot.touch_form(form)
+    db.commit()
+    # Reload so the choices come back in their new order.
+    db.refresh(question)
+    db.refresh(form)
+    return presenters.present_form_detail(db, form)
+
+
 @router.patch("/choices/{choice_id}", response_model=schemas.FormDetailOut)
 def update_choice(
     choice_id: int,

@@ -18,7 +18,8 @@ import type { ReactNode } from "react";
 import { Button } from "./button";
 import { Modal, ModalActions } from "./modal";
 
-export type FormSection = "create" | "workflow" | "connect" | "share" | "results";
+export type FormSection =
+  "create" | "workflow" | "connect" | "share" | "results";
 
 const SECTIONS: { id: FormSection; label: string }[] = [
   { id: "create", label: "Content" },
@@ -32,12 +33,24 @@ interface FormHeaderProps {
   formId: number;
   formTitle: string;
   activeSection: FormSection;
+  /**
+   * False until the form is published for the first time. Share and Results are
+   * hidden until then, as in Typeform: there is nothing to share and no results yet.
+   */
+  hasBeenPublished: boolean;
   onRename: (title: string) => void;
   /** Buttons shown at the right end (e.g. the builder's Publish button). */
   actions?: ReactNode;
 }
 
-export function FormHeader({ formId, formTitle, activeSection, onRename, actions }: FormHeaderProps) {
+export function FormHeader({
+  formId,
+  formTitle,
+  activeSection,
+  hasBeenPublished,
+  onRename,
+  actions,
+}: FormHeaderProps) {
   const [isRenaming, setIsRenaming] = useState(false);
   const [draftTitle, setDraftTitle] = useState(formTitle);
 
@@ -55,10 +68,21 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
     setIsRenaming(false);
   }
 
+  const visibleSections = SECTIONS.filter(
+    (section) =>
+      hasBeenPublished || (section.id !== "share" && section.id !== "results"),
+  );
+
   return (
     <header className="relative flex h-14 shrink-0 items-center justify-between gap-4 px-4">
-      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 font-medium text-admin-muted">
-        <Link href="/" className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-admin-hover">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex min-w-0 items-center gap-1 font-medium text-admin-muted"
+      >
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-admin-hover"
+        >
           <LayoutList aria-hidden="true" className="h-4 w-4" />
           Forms
         </Link>
@@ -74,8 +98,11 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
       </nav>
 
       {/* Centred on the page regardless of how wide the two sides are. */}
-      <nav aria-label="Form sections" className="absolute left-1/2 top-0 hidden h-14 -translate-x-1/2 items-center gap-1 md:flex">
-        {SECTIONS.map((section) => {
+      <nav
+        aria-label="Form sections"
+        className="absolute left-1/2 top-0 hidden h-14 -translate-x-1/2 items-center gap-1 md:flex"
+      >
+        {visibleSections.map((section) => {
           const isActive = section.id === activeSection;
           return (
             <Link
@@ -89,7 +116,9 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
             >
               {section.label}
               {/* Typeform marks the active section with a short bar at the very top edge. */}
-              {isActive && <span className="absolute inset-x-3 -top-3 h-[2px] rounded-full bg-admin-active" />}
+              {isActive && (
+                <span className="absolute inset-x-3 -top-3 h-[2px] rounded-full bg-admin-active" />
+              )}
             </Link>
           );
         })}
@@ -97,7 +126,11 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
 
       <div className="flex shrink-0 items-center gap-2">{actions}</div>
 
-      <Modal isOpen={isRenaming} onClose={() => setIsRenaming(false)} title="Rename form">
+      <Modal
+        isOpen={isRenaming}
+        onClose={() => setIsRenaming(false)}
+        title="Rename form"
+      >
         <form onSubmit={submitRename}>
           <input
             autoFocus
@@ -110,7 +143,11 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
           />
           <ModalActions>
             <Button onClick={() => setIsRenaming(false)}>Cancel</Button>
-            <Button type="submit" variant="primary" disabled={draftTitle.trim() === ""}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={draftTitle.trim() === ""}
+            >
               Save
             </Button>
           </ModalActions>

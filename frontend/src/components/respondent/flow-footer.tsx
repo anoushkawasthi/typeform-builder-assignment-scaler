@@ -1,17 +1,21 @@
 /**
  * flow-footer.tsx — the controls fixed to the bottom-right of a form.
  *
- * What it does:   the previous / next arrow buttons and the "made with" badge.
+ * What it does:   the previous / next arrow buttons and the "made with" badge while
+ *                 the form is being filled in; a full-width bar once it is submitted.
  * Depends on:     lucide-react (icons).
  * Depended on by: form-flow.tsx.
  */
 
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
 
 interface FlowFooterProps {
   /** False on the thank-you screen, where there is nowhere left to go. */
   showNavigation: boolean;
   canGoBack: boolean;
+  /** True on the thank-you screen. */
+  isFinished: boolean;
   onPrevious: () => void;
   onNext: () => void;
 }
@@ -20,7 +24,20 @@ const ARROW_BUTTON_CLASSES =
   "flex h-8 w-8 items-center justify-center bg-form-button text-form-button-text " +
   "transition-opacity duration-200 ease-form hover:opacity-80 disabled:opacity-30 disabled:hover:opacity-30";
 
-export function FlowFooter({ showNavigation, canGoBack, onPrevious, onNext }: FlowFooterProps) {
+export function FlowFooter({ showNavigation, canGoBack, isFinished, onPrevious, onNext }: FlowFooterProps) {
+  // After submitting, Typeform swaps the floating controls for a grey bar across the
+  // bottom with its tagline and a small button.
+  if (isFinished) {
+    return (
+      <div className="absolute inset-x-0 bottom-0 z-10 flex h-14 items-center justify-end gap-3 border-t border-black/10 bg-[#F1F1F1] px-4 font-form">
+        <span className="hidden text-[14px] text-black @2xl:inline">How you ask is everything</span>
+        <Link href="/" className="flex h-6 items-center rounded bg-form-button px-2 text-[11px] text-form-button-text">
+          Create a&nbsp;<strong className="font-semibold">form</strong>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 @2xl:bottom-8 @2xl:right-8">
       {showNavigation && (

@@ -3,15 +3,17 @@
 /**
  * publish-button.tsx — the Publish control in the builder's header.
  *
- * What it does:   shows the form's status and the right action for it: "Publish" for a
- *                 draft, "Publish edits" when a live form has unpublished changes, and a
- *                 quiet "Published" when everything is live. Warns before a publish that
+ * What it does:   shows the right action for the form's state: "Publish" for a draft,
+ *                 "Publish edits" when a live form has unpublished changes, and a
+ *                 copy-link button when everything is live. The first publish plays a
+ *                 short animation and then opens the Share page. Warns before a publish that
  *                 would delete stored answers.
  * Depends on:     ui/button.tsx, ui/modal.tsx, use-form-editor.ts, sonner.
  * Depended on by: builder-screen.tsx.
  */
 
-import { Check, Send } from "lucide-react";
+import { Link2, Send } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Modal, ModalActions } from "@/components/ui/modal";
 import type { FormDetail } from "@/lib/types";
 
+import { PublishCelebration } from "./publish-celebration";
 import type { FormEditor } from "./use-form-editor";
 
 interface PublishButtonProps {
@@ -26,33 +29,46 @@ interface PublishButtonProps {
   editor: FormEditor;
 }
 
+// How long the publish animation plays before moving to the Share page.
+const CELEBRATION_MS = 1900;
+
 /** The address respondents use. Built from wherever the app is currently running. */
 export function publicFormUrl(publicId: string): string {
   return `${window.location.origin}/to/${publicId}`;
 }
 
 export function PublishButton({ form, editor }: PublishButtonProps) {
+  const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
+  const [isCelebrating, setIsCelebrating] = useState(false);
 
   const isLive = form.status === "published";
   const hasChanges = form.has_unpublished_changes;
 
   async function publish() {
     setIsConfirming(false);
+    const isFirstPublish = !isLive;
     try {
       const published = await editor.publish();
-      toast.success(isLive ? "Your edits are live" : "Form published", {
-        action: {
-          label: "Copy link",
-          onClick: () => {
-            void navigator.clipboard.writeText(publicFormUrl(published.public_id));
-            toast.success("Link copied");
-          },
-        },
-      });
+      if (isFirstPublish) {
+        // The first publish is a moment worth marking, as Typeform does: play the
+        // animation, then go to the Share page, where the new link is.
+        setIsCelebrating(true);
+        window.setTimeout(
+          () => router.push(`/forms/${published.id}/share`),
+          CELEBRATION_MS,
+        );
+      } else {
+        toast.success("Your edits are live");
+      }
     } catch {
       // The editor already showed the server's message in a toast.
     }
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(publicFormUrl(form.public_id));
+    toast.success("Link copied");
   }
 
   function handleClick() {
@@ -65,18 +81,30 @@ export function PublishButton({ form, editor }: PublishButtonProps) {
     }
   }
 
+  // Published with nothing waiting: Typeform shows a copy-link button here.
   if (isLive && !hasChanges) {
     return (
-      <span className="flex h-8 items-center gap-2 rounded-lg bg-status-green-bg px-3 font-medium text-status-green">
-        <Check aria-hidden="true" className="h-4 w-4" />
-        Published
-      </span>
+      <>
+        <Button
+          iconOnly
+          aria-label="Copy link"
+          title="Copy link"
+          onClick={() => void copyLink()}
+        >
+          <Link2 aria-hidden="true" className="h-4 w-4" />
+        </Button>
+        {isCelebrating && <PublishCelebration />}
+      </>
     );
   }
 
   return (
     <>
-      <Button variant="primary" onClick={handleClick} disabled={editor.isPublishing || form.questions.length === 0}>
+      <Button
+        variant="primary"
+        onClick={handleClick}
+        disabled={editor.isPublishing || form.questions.length === 0}
+      >
         <Send aria-hidden="true" className="h-4 w-4" />
         {isLive ? "Publish edits" : "Publish"}
       </Button>

@@ -143,6 +143,10 @@ export function updateChoice(choiceId: number, label: string) {
   return request<FormDetail>("PATCH", `/api/choices/${choiceId}`, { label });
 }
 
+export function reorderChoices(questionId: number, choiceIds: number[]) {
+  return request<FormDetail>("PUT", `/api/questions/${questionId}/choices/order`, { choice_ids: choiceIds });
+}
+
 export function deleteChoice(choiceId: number) {
   return request<FormDetail>("DELETE", `/api/choices/${choiceId}`);
 }

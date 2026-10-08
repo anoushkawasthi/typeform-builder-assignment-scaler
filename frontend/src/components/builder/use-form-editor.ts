@@ -89,6 +89,11 @@ export function useFormEditor(formId: number) {
     mutationFn: (variables: { choiceId: number; label: string }) =>
       api.updateChoice(variables.choiceId, variables.label),
   });
+  const reorderChoicesMutation = useMutation({
+    ...saveOptions,
+    mutationFn: (variables: { questionId: number; choiceIds: number[] }) =>
+      api.reorderChoices(variables.questionId, variables.choiceIds),
+  });
   const deleteChoiceMutation = useMutation({
     ...saveOptions,
     mutationFn: (choiceId: number) => api.deleteChoice(choiceId),
@@ -153,6 +158,8 @@ export function useFormEditor(formId: number) {
     addChoice: (questionId: number) => addChoiceMutation.mutate(questionId),
     renameChoice: (choiceId: number, label: string) => renameChoiceMutation.mutate({ choiceId, label }),
     deleteChoice: (choiceId: number) => deleteChoiceMutation.mutate(choiceId),
+    reorderChoices: (questionId: number, choiceIds: number[]) =>
+      reorderChoicesMutation.mutate({ questionId, choiceIds }),
     addLogicJump: (questionId: number, rule: LogicJumpInput) => addLogicJumpMutation.mutate({ questionId, rule }),
     replaceLogicJump: (logicJumpId: number, rule: LogicJumpInput) =>
       replaceLogicJumpMutation.mutate({ logicJumpId, rule }),

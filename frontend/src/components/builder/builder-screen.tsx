@@ -146,6 +146,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
         formId={form.id}
         formTitle={form.title}
         activeSection="create"
+        hasBeenPublished={form.published_at !== null}
         onRename={(title) => editor.updateForm({ title })}
         actions={
           <>
@@ -257,6 +258,8 @@ export function BuilderScreen({ formId }: { formId: number }) {
                 onAddChoice={() => editor.addChoice(selectedQuestion.id)}
                 onRenameChoice={editor.renameChoice}
                 onRemoveChoice={editor.deleteChoice}
+                onReorderChoices={(choiceIds) => editor.reorderChoices(selectedQuestion.id, choiceIds)}
+                onOpenLogic={() => setIsLogicOpen(true)}
               />
             )}
           </div>

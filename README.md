@@ -19,7 +19,7 @@ The demo opens straight into the workspace of a default creator; there is no log
 | Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), Sonner (toasts), Lucide (icons) |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2 |
 | Database | SQLite |
-| Tests | pytest (34 tests: validation rules, logic jumps and API routes) |
+| Tests | pytest (35 tests: validation rules, logic jumps and API routes) |
 | Hosting | Frontend on Vercel; backend as a systemd service on a VPS behind a Cloudflare Tunnel, SQLite on the server's disk (a Dockerfile and Compose file are included as an alternative) |
 
 ## Features

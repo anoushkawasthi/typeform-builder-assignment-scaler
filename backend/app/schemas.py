@@ -42,6 +42,12 @@ class ChoiceCreate(BaseModel):
     label: str = Field(default="", max_length=255)
 
 
+class ChoiceOrderIn(BaseModel):
+    """The ids of all of a question's choices, in their new order."""
+
+    choice_ids: list[int]
+
+
 class ChoiceUpdate(BaseModel):
     label: str = Field(max_length=255)
 

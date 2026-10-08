@@ -38,6 +38,7 @@ export function ResultsScreen({ formId }: { formId: number }) {
         formId={formId}
         formTitle={editor.form?.title ?? "..."}
         activeSection="results"
+        hasBeenPublished={(editor.form?.published_at ?? null) !== null}
         onRename={(title) => editor.updateForm({ title })}
       />
 

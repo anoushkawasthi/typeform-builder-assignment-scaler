@@ -333,3 +333,19 @@ def test_welcome_screen_is_published_with_the_form(client):
         "text": "Two minutes",
         "button_text": "Go",
     }
+
+
+def test_choices_can_be_reordered(client):
+    form = client.post("/api/forms", json={"title": "Choices"}).json()
+    form = client.post(f"/api/forms/{form['id']}/questions", json={"type": "multiple_choice"}).json()
+    question = form["questions"][0]
+    client.patch(f"/api/choices/{question['choices'][0]['id']}", json={"label": "One"})
+    client.post(f"/api/questions/{question['id']}/choices", json={"label": "Two"})
+    form = client.post(f"/api/questions/{question['id']}/choices", json={"label": "Three"}).json()
+    ids = [choice["id"] for choice in form["questions"][0]["choices"]]
+
+    form = client.put(f"/api/questions/{question['id']}/choices/order", json={"choice_ids": [ids[2], ids[0], ids[1]]}).json()
+    assert [choice["label"] for choice in form["questions"][0]["choices"]] == ["Three", "One", "Two"]
+
+    incomplete = client.put(f"/api/questions/{question['id']}/choices/order", json={"choice_ids": ids[:2]})
+    assert incomplete.status_code == 400

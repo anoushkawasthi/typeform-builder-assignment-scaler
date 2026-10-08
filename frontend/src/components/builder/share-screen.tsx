@@ -59,6 +59,7 @@ export function ShareScreen({ formId }: { formId: number }) {
         formId={form.id}
         formTitle={form.title}
         activeSection="share"
+        hasBeenPublished={form.published_at !== null}
         onRename={(title) => editor.updateForm({ title })}
         actions={<PublishButton form={form} editor={editor} />}
       />
