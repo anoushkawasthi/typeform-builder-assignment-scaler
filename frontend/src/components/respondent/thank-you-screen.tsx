@@ -19,9 +19,9 @@ export function ThankYouScreen({ title, text }: ThankYouScreenProps) {
       <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full border-[5px] border-form-question text-form-question">
         <Check aria-hidden="true" className="h-12 w-12" strokeWidth={3} />
       </span>
-      <h1 className="mt-6 text-[24px] leading-[32px] text-form-question sm:text-[32px] sm:leading-[40px]">{title}</h1>
+      <h1 className="mt-6 text-[24px] leading-[32px] text-form-question @2xl:text-[32px] @2xl:leading-[40px]">{title}</h1>
       {text !== "" && (
-        <p className="mt-2 whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 sm:text-[18px]">{text}</p>
+        <p className="mt-2 whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 @2xl:text-[18px]">{text}</p>
       )}
     </div>
   );

@@ -22,7 +22,7 @@ interface TextAnswerProps extends QuestionAnswerProps {
 export const UNDERLINED_FIELD_CLASSES =
   "block w-full bg-transparent py-2 font-form text-[20px] leading-[28px] text-form-answer outline-none " +
   "placeholder:text-form-answer-30 placeholder:transition-opacity focus:placeholder:opacity-50 " +
-  "sm:text-[26px] sm:leading-[34px] " +
+  "@2xl:text-[26px] @2xl:leading-[34px] " +
   // The underline is a shadow, not a border, so it can thicken on focus without
   // shifting the layout by a pixel.
   "shadow-[0_1px_0_0_color-mix(in_srgb,var(--form-answer)_60%,transparent)] " +

@@ -84,11 +84,33 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
 
   // How far the panel has been dragged from where it first appeared.
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const panelRef = useRef<HTMLElement>(null);
   // Where the pointer and the panel were when the current drag began.
-  const dragStartRef = useRef<{ pointerX: number; pointerY: number; offsetX: number; offsetY: number } | null>(null);
+  const dragStartRef = useRef<{
+    pointerX: number;
+    pointerY: number;
+    offsetX: number;
+    offsetY: number;
+    panelLeft: number;
+    panelTop: number;
+    panelWidth: number;
+  } | null>(null);
 
   function startDrag(event: React.PointerEvent<HTMLButtonElement>) {
-    dragStartRef.current = { pointerX: event.clientX, pointerY: event.clientY, offsetX: offset.x, offsetY: offset.y };
+    const panel = panelRef.current;
+    if (panel === null) {
+      return;
+    }
+    const box = panel.getBoundingClientRect();
+    dragStartRef.current = {
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      offsetX: offset.x,
+      offsetY: offset.y,
+      panelLeft: box.left,
+      panelTop: box.top,
+      panelWidth: box.width,
+    };
     // "Capturing" the pointer keeps the move events coming to the grip even when the
     // pointer travels outside it, so no window-level listeners are needed.
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -99,10 +121,21 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
     if (start === null) {
       return;
     }
-    setOffset({
-      x: start.offsetX + (event.clientX - start.pointerX),
-      y: start.offsetY + (event.clientY - start.pointerY),
-    });
+    let moveX = event.clientX - start.pointerX;
+    let moveY = event.clientY - start.pointerY;
+
+    // Keep the panel on screen: its left and right edges may not pass the window's,
+    // and its header (the part you drag by) must stay visible at the top and bottom.
+    const margin = 8;
+    const headerHeight = 48;
+    const minMoveX = margin - start.panelLeft;
+    const maxMoveX = window.innerWidth - margin - start.panelWidth - start.panelLeft;
+    const minMoveY = margin - start.panelTop;
+    const maxMoveY = window.innerHeight - headerHeight - start.panelTop;
+    moveX = Math.min(Math.max(moveX, minMoveX), Math.max(maxMoveX, minMoveX));
+    moveY = Math.min(Math.max(moveY, minMoveY), Math.max(maxMoveY, minMoveY));
+
+    setOffset({ x: start.offsetX + moveX, y: start.offsetY + moveY });
   }
 
   function endDrag() {
@@ -111,6 +144,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
 
   return (
     <section
+      ref={panelRef}
       aria-label="Design"
       style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
       className="absolute left-[140px] top-[44px] z-30 w-[544px] max-w-[calc(100%-16px)] rounded-xl border border-admin-border bg-white p-2 shadow-[0_0_0_3px_var(--color-admin-ring)]"

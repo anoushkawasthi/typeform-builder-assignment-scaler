@@ -30,7 +30,7 @@ interface ChoiceAnswerProps extends QuestionAnswerProps {
 
 // How long the picked choice blinks before the form moves on. Long enough to see what
 // you picked, short enough not to feel slow.
-const ADVANCE_DELAY_MS = 350;
+const ADVANCE_DELAY_MS = 500;
 
 function letterForIndex(index: number): string {
   return String.fromCharCode("A".charCodeAt(0) + index);
@@ -121,7 +121,7 @@ export function ChoiceAnswer({
 
       <div
         role={allowMultiple ? "group" : "radiogroup"}
-        className="flex w-full flex-col items-stretch gap-2 sm:inline-flex sm:w-auto sm:min-w-[256px]"
+        className="flex w-full flex-col items-stretch gap-2 @2xl:inline-flex @2xl:w-auto @2xl:min-w-[256px]"
       >
         {choices.map((choice, index) => {
           const isSelected = selectedIds.includes(choice.id);

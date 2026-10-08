@@ -69,7 +69,7 @@ export function QuestionScreen({
         className={
           "mb-2 inline-flex h-[19px] min-w-4 items-center justify-center rounded-[5px_3px] px-1 " +
           "bg-form-question text-[11px] font-bold leading-none text-form-bg " +
-          "sm:absolute sm:-left-[26px] sm:top-[8px] sm:mb-0"
+          "@2xl:absolute @2xl:-left-[26px] @2xl:top-[8px] @2xl:mb-0"
         }
       >
         {number}
@@ -77,7 +77,7 @@ export function QuestionScreen({
 
       <h1
         id={titleId}
-        className="text-[20px] font-normal leading-[28px] text-form-question sm:text-[26px] sm:leading-[34px]"
+        className="text-[20px] font-normal leading-[28px] text-form-question @2xl:text-[26px] @2xl:leading-[34px]"
       >
         {titleContent ?? (
           <>
@@ -89,7 +89,7 @@ export function QuestionScreen({
 
       {descriptionContent ??
         (question.description !== "" && (
-          <p className="mt-2 whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 sm:text-[18px]">
+          <p className="mt-2 whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 @2xl:text-[18px]">
             <FormattedText text={question.description} />
           </p>
         ))}
@@ -138,6 +138,13 @@ export function QuestionScreen({
                   : "Submit"
                 : "OK"}
             </button>
+          )}
+          {/* On the last question Typeform reminds keyboard users how to send the form.
+              Hidden on narrow screens, where there is usually no keyboard. */}
+          {error === null && isLastQuestion && isInteractive && (
+            <span className="ml-3 hidden align-middle text-[12px] text-form-answer @2xl:inline">
+              press <strong className="font-semibold">Ctrl + Enter ↵</strong>
+            </span>
           )}
         </div>
       )}

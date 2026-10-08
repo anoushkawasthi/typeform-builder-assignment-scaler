@@ -21,7 +21,9 @@ export function ProgressBar({ answered, total }: ProgressBarProps) {
       aria-valuemin={0}
       aria-valuemax={total}
       aria-valuenow={answered}
-      className="fixed inset-x-0 top-0 z-10 px-[6px] py-1"
+      // Absolute, not fixed: it sticks to the top of the form's own box, which is the
+      // whole window on the public page and the frame in the preview.
+      className="absolute inset-x-0 top-0 z-10 px-[6px] py-1"
     >
       <div className="h-[3px] overflow-hidden rounded-full bg-form-answer-40">
         {/* Only the width changes; the 0.2s transition is what makes it glide. */}

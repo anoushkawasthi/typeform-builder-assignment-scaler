@@ -71,9 +71,9 @@ export function RatingAnswer({ question, value, onChange, isActive, isInteractiv
             tabIndex={isInteractive && isActive ? 0 : -1}
             onMouseEnter={() => isInteractive && setHoveredRating(rating)}
             onClick={() => isInteractive && onChange({ number: rating })}
-            className={"flex w-10 flex-col items-center sm:w-14 " + (isInteractive ? "cursor-pointer" : "cursor-default")}
+            className={"flex w-10 flex-col items-center @2xl:w-14 " + (isInteractive ? "cursor-pointer" : "cursor-default")}
           >
-            <svg viewBox="0 0 56 56" className="h-10 w-10 sm:h-14 sm:w-14" aria-hidden="true">
+            <svg viewBox="0 0 56 56" className="h-10 w-10 @2xl:h-14 @2xl:w-14" aria-hidden="true">
               <path
                 d={STAR_PATH}
                 strokeWidth="2.5"

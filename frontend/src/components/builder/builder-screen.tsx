@@ -28,6 +28,7 @@ import type { Question, QuestionType } from "@/lib/types";
 import { AddQuestionDialog } from "./add-question-dialog";
 import { DesignPanel } from "./design-panel";
 import { EndingDialog } from "./ending-dialog";
+import { PreviewOverlay } from "./preview-overlay";
 import { PublishButton } from "./publish-button";
 import { QuestionCanvas } from "./question-canvas";
 import { QuestionList } from "./question-list";
@@ -42,6 +43,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isEndingOpen, setIsEndingOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
 
   if (editor.isLoading) {
@@ -176,17 +178,18 @@ export function BuilderScreen({ formId }: { formId: number }) {
               Design
             </Button>
             <span className="mx-2 h-4 w-px bg-admin-border" />
-            {/* Icon-only, like Typeform's toolbar. Preview opens in a new tab so the
-                builder keeps its place. */}
-            <Link
-              href={`/forms/${form.id}/preview`}
-              target="_blank"
+            {/* Icon-only, like Typeform's toolbar. Preview opens over the builder, in the
+                same tab. */}
+            <Button
+              variant="ghost"
+              iconOnly
               aria-label="Preview"
               title="Preview"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
+              disabled={questions.length === 0}
+              onClick={() => setIsPreviewOpen(true)}
             >
               <Play aria-hidden="true" className="h-4 w-4" />
-            </Link>
+            </Button>
             <Button
               variant="ghost"
               iconOnly
@@ -243,6 +246,8 @@ export function BuilderScreen({ formId }: { formId: number }) {
       </div>
 
       <AddQuestionDialog isOpen={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} onPick={handleAddQuestion} />
+
+      {isPreviewOpen && <PreviewOverlay form={form} onClose={() => setIsPreviewOpen(false)} />}
 
       <EndingDialog isOpen={isEndingOpen} onClose={() => setIsEndingOpen(false)} form={form} onUpdate={editor.updateForm} />
 

@@ -38,6 +38,11 @@ interface FormFlowProps {
    * that has an `answerErrors` list; the flow then jumps to the first one.
    */
   onSubmit: (answers: AnswerPayload[]) => Promise<void>;
+  /**
+   * False (default): the form covers the whole browser window, as on the public link.
+   * True: it fills the box it is placed in, as in the builder's preview frame.
+   */
+  isEmbedded?: boolean;
 }
 
 // +1 = moving forward (new question comes up from below), -1 = moving back.
@@ -45,8 +50,9 @@ type Direction = 1 | -1;
 
 // Measured on Typeform: a question travels 60% of its own height while fading.
 const SLIDE_DISTANCE = "60%";
-const SLIDE_SECONDS = 0.4;
-const FADE_SECONDS = 0.25;
+// Typeform's change of question is unhurried; these were tuned by eye against it.
+const SLIDE_SECONDS = 0.6;
+const FADE_SECONDS = 0.4;
 // A strong ease-out: fast at first, then settling.
 const SLIDE_EASING: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -54,7 +60,7 @@ function hasAnswerErrors(error: unknown): error is { answerErrors: AnswerError[]
   return typeof error === "object" && error !== null && Array.isArray((error as { answerErrors?: unknown }).answerErrors);
 }
 
-export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
+export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFlowProps) {
   const questions = form.questions;
 
   // Which screen is showing. 0..n-1 are questions; n is the thank-you screen.
@@ -160,6 +166,14 @@ export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
       const isDropdown = role === "combobox";
       const isChoice = role === "radio" || role === "checkbox";
 
+      // Ctrl+Enter (Cmd+Enter on a Mac) always confirms, wherever the cursor is. On the
+      // last question that submits the form, which is what the hint beside Submit says.
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        advance();
+        return;
+      }
+
       if (event.key === "Enter") {
         // Shift+Enter in a long-text answer is a line break, not "next".
         if (isTextarea && event.shiftKey) {
@@ -223,7 +237,7 @@ export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
   }
 
   return (
-    <FormTheme theme={form.theme} className="fixed inset-0 overflow-hidden">
+    <FormTheme theme={form.theme} className={(isEmbedded ? "absolute" : "fixed") + " inset-0 overflow-hidden"}>
       {!isFinished && <ProgressBar answered={answeredCount} total={questions.length} />}
 
       {/* Every screen is placed in the same grid cell, so the outgoing and incoming
@@ -243,7 +257,7 @@ export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
               y: { duration: SLIDE_SECONDS, ease: SLIDE_EASING },
               opacity: { duration: FADE_SECONDS, ease: "easeOut" },
             }}
-            className="col-start-1 row-start-1 flex w-full items-center justify-center self-center px-6 py-20 sm:px-20"
+            className="col-start-1 row-start-1 flex w-full items-center justify-center self-center px-6 py-20 @2xl:px-20"
           >
             <div className="w-full max-w-[720px]">
               {isFinished ? (

@@ -22,7 +22,7 @@ const ARROW_BUTTON_CLASSES =
 
 export function FlowFooter({ showNavigation, canGoBack, onPrevious, onNext }: FlowFooterProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-10 flex items-center gap-2 sm:bottom-8 sm:right-8">
+    <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 @2xl:bottom-8 @2xl:right-8">
       {showNavigation && (
         // Two buttons with a 2px gap and mirrored corner radii, so they read as one pill.
         <div className="flex gap-[2px]">

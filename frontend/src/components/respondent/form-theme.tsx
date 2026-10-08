@@ -43,7 +43,10 @@ interface FormThemeProps {
 
 export function FormTheme({ theme, className, children }: FormThemeProps) {
   return (
-    <div style={themeToCssVariables(theme)} className={`bg-form-bg font-form ${className ?? ""}`}>
+    // `@container` lets everything inside size itself by the width of THIS box rather
+    // than the browser window (the `@2xl:` classes). That is what makes the same form
+    // look right full-screen, in the builder canvas, and in the preview's phone frame.
+    <div style={themeToCssVariables(theme)} className={`@container bg-form-bg font-form ${className ?? ""}`}>
       {children}
     </div>
   );
