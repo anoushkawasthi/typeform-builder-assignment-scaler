@@ -7,7 +7,7 @@
  *                 header and toolbar, remembers which question is selected, and connects
  *                 every panel to `useFormEditor`, which does the saving.
  * Depends on:     use-form-editor.ts and the other files in components/builder,
- *                 ui/form-header.tsx.
+ *                 ui/form-header.tsx, lib/api.ts (address of the responses download).
  * Depended on by: app/forms/[id]/create/page.tsx.
  *
  * This component holds only "which thing is open or selected" state. The form itself
@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { FormHeader } from "@/components/ui/form-header";
 import { Modal, ModalActions } from "@/components/ui/modal";
+import { responsesExportUrl } from "@/lib/api";
 import type { Question, QuestionType } from "@/lib/types";
 
 import { AddQuestionDialog } from "./add-question-dialog";
@@ -299,23 +300,38 @@ export function BuilderScreen({ formId }: { formId: number }) {
 
       <EndingDialog isOpen={isEndingOpen} onClose={() => setIsEndingOpen(false)} form={form} onUpdate={editor.updateForm} />
 
+      {/* Worded and laid out like Typeform's dialog. One difference in substance: our
+          answers are removed by the next publish, not at once, so the bullet says so. */}
       <Modal
         isOpen={questionToDelete !== null}
         onClose={() => setQuestionToDelete(null)}
-        title="Delete question?"
-        description={
-          questionToDelete === null
-            ? undefined
-            : `It has ${questionToDelete.answer_count} ${questionToDelete.answer_count === 1 ? "answer" : "answers"}. ` +
-              `They stay in your results until you publish again, and are then deleted for good.`
-        }
+        title="Delete question with responses?"
       >
+        {questionToDelete !== null && (
+          <div className="text-admin-text">
+            <p>This will also delete:</p>
+            <ul className="mt-4 list-disc pl-10">
+              <li>
+                {questionToDelete.answer_count === 1
+                  ? "The 1 response to this question, when you next publish"
+                  : `All ${questionToDelete.answer_count} responses to this question, when you next publish`}
+              </li>
+            </ul>
+            <p className="mt-5">
+              Need your data?{" "}
+              <a href={responsesExportUrl(form.id, "csv", [])} className="underline underline-offset-2">
+                Download your responses
+              </a>{" "}
+              before deleting.
+            </p>
+          </div>
+        )}
         <ModalActions>
           <Button variant="ghost" onClick={() => setQuestionToDelete(null)}>
             Cancel
           </Button>
           <Button variant="danger" onClick={() => questionToDelete !== null && void deleteQuestion(questionToDelete)}>
-            Delete
+            Delete question with responses
           </Button>
         </ModalActions>
       </Modal>

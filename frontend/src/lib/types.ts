@@ -91,6 +91,16 @@ export interface FormListItem {
   updated_at: string;
 }
 
+/** A question or choice deleted from the draft that still has stored answers. */
+export interface RemovedOnPublish {
+  kind: "question" | "choice";
+  /** The deleted question's title, or the deleted choice's label. */
+  label: string;
+  /** For a deleted choice: the question it belonged to. */
+  question_title: string;
+  answer_count: number;
+}
+
 export interface FormDetail {
   id: number;
   public_id: string;
@@ -99,6 +109,8 @@ export interface FormDetail {
   response_count: number;
   has_unpublished_changes: boolean;
   answers_lost_on_publish: number;
+  /** The same thing item by item: what was deleted, and how many answers go with it. */
+  removed_on_publish: RemovedOnPublish[];
   theme: Theme;
   welcome_enabled: boolean;
   welcome_title: string;
@@ -211,6 +223,8 @@ export interface ResponseOut {
 
 export interface ResponsesTable {
   questions: RenderableQuestion[];
+  /** Title of the published thank-you screen, for the table's "Ending" column. */
+  ending_title: string;
   responses: ResponseOut[];
 }
 

@@ -2,6 +2,12 @@
 test_api.py — the main routes, tested end to end through HTTP against a test database.
 """
 
+import csv
+import io
+from datetime import datetime
+
+from openpyxl import load_workbook
+
 
 def test_create_rename_duplicate_delete_form(client):
     form = client.post("/api/forms", json={"title": "Survey"}).json()
@@ -146,12 +152,17 @@ def test_deleting_an_answered_question_removes_its_answers_only_on_publish(clien
     draft = client.delete(f"/api/questions/{rating['id']}").json()
     assert rating["id"] not in [question["id"] for question in draft["questions"]]
     assert draft["answers_lost_on_publish"] == 1
+    # The publish confirmation names the deleted question, not just a number.
+    assert draft["removed_on_publish"] == [
+        {"kind": "question", "label": rating["title"], "question_title": rating["title"], "answer_count": 1}
+    ]
 
     # Still live for respondents, and the stored answer is still there.
     table = client.get(f"/api/forms/{form_id}/responses").json()
     assert rating["id"] in [answer["question_id"] for answer in table["responses"][0]["answers"]]
 
-    client.post(f"/api/forms/{form_id}/publish")
+    published = client.post(f"/api/forms/{form_id}/publish").json()
+    assert published["removed_on_publish"] == []
     table = client.get(f"/api/forms/{form_id}/responses").json()
     assert rating["id"] not in [answer["question_id"] for answer in table["responses"][0]["answers"]]
     assert rating["id"] not in [question["id"] for question in table["questions"]]
@@ -174,6 +185,9 @@ def test_deleting_a_picked_choice_waits_for_publish(client, published_form):
     draft_question = [question for question in draft["questions"] if question["id"] == multiple_choice["id"]][0]
     assert [choice["label"] for choice in draft_question["choices"]] == ["Red", "Blue"]
     assert draft["answers_lost_on_publish"] == 1
+    assert draft["removed_on_publish"] == [
+        {"kind": "choice", "label": "Green", "question_title": multiple_choice["title"], "answer_count": 1}
+    ]
 
     # The live form still offers Green, and the stored pick is still shown.
     live = client.get(f"/api/public/forms/{published_form['public_id']}").json()
@@ -191,10 +205,53 @@ def test_csv_export_has_a_header_and_one_row_per_response(client, published_form
     response = client.get(f"/api/forms/{published_form['form_id']}/responses.csv")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/csv")
-    lines = response.text.strip().splitlines()
-    assert len(lines) == 2
-    assert lines[0].startswith("Response ID,Started at (UTC),Submitted at (UTC)")
-    assert "Ann" in lines[1] and "ann@example.com" in lines[1] and "Green" in lines[1]
+
+    rows = list(csv.reader(io.StringIO(response.text)))
+    assert len(rows) == 2
+    heading, row = rows
+    # Typeform's layout: the response number, the questions, then the response details.
+    assert heading[0] == "#"
+    assert heading[-4:] == ["Response Type", "Start Date (UTC)", "Submit Date (UTC)", "Ending"]
+    assert len(heading) == 1 + len(published_form["questions"]) + 4
+    assert "Ann" in row and "ann@example.com" in row and "Green" in row
+    assert row[-4] == "completed"
+    # Dates are written as "2026-10-08 22:07:35".
+    assert datetime.strptime(row[-2], "%Y-%m-%d %H:%M:%S") is not None
+    assert row[-1] == published_form["thank_you_title"]
+
+
+def test_xlsx_export_holds_the_same_table_as_the_csv(client, published_form):
+    submit(client, published_form, valid_answers(published_form))
+    form_id = published_form["form_id"]
+
+    csv_rows = list(csv.reader(io.StringIO(client.get(f"/api/forms/{form_id}/responses.csv").text)))
+    response = client.get(f"/api/forms/{form_id}/responses.xlsx")
+    assert response.status_code == 200
+    assert response.headers["content-disposition"].endswith('.xlsx"')
+
+    sheet = load_workbook(io.BytesIO(response.content)).active
+    xlsx_rows = []
+    for row in sheet.iter_rows(values_only=True):
+        # Excel has no empty string: an empty cell is read back as None.
+        xlsx_rows.append(["" if cell is None else str(cell) for cell in row])
+    assert xlsx_rows == csv_rows
+
+
+def test_export_can_be_limited_to_chosen_responses(client, published_form):
+    form_id = published_form["form_id"]
+    for _ in range(3):
+        submit(client, published_form, valid_answers(published_form))
+    table = client.get(f"/api/forms/{form_id}/responses").json()
+    all_ids = [response["id"] for response in table["responses"]]
+    assert table["ending_title"] == published_form["thank_you_title"]
+
+    response = client.get(f"/api/forms/{form_id}/responses.csv", params={"ids": [all_ids[0], all_ids[2]]})
+    rows = list(csv.reader(io.StringIO(response.text)))
+    assert [row[0] for row in rows[1:]] == [str(all_ids[0]), str(all_ids[2])]
+
+    # An id that belongs to no response of this form simply matches nothing.
+    response = client.get(f"/api/forms/{form_id}/responses.csv", params={"ids": [999999]})
+    assert len(list(csv.reader(io.StringIO(response.text)))) == 1
 
 
 def make_branching_form(client):

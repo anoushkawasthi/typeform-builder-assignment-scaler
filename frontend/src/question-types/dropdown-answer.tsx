@@ -5,7 +5,8 @@
  *
  * What it does:   an underlined text field ("Type or select an option") with a list of
  *                 choices under it. Typing filters the list; arrow keys move the
- *                 highlight; Enter or a click picks a choice and moves the form on.
+ *                 highlight (ArrowUp from the top goes to the previous question);
+ *                 Enter or a click picks a choice and moves the form on.
  * Depends on:     question-answer.tsx (props), text-answer.tsx (shared field styling).
  * Depended on by: question-answer.tsx.
  */
@@ -61,6 +62,12 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
       setIsOpen(true);
       setHighlightedIndex((index) => Math.min(index + 1, visibleChoices.length - 1));
     } else if (event.key === "ArrowUp") {
+      // With the highlight already on the first option (or the list closed) there is
+      // nowhere to move up to, so the press is left for the form: it goes back to the
+      // previous question, as ArrowUp does everywhere else.
+      if (!isOpen || highlightedIndex === 0) {
+        return;
+      }
       event.preventDefault();
       event.stopPropagation();
       setHighlightedIndex((index) => Math.max(index - 1, 0));

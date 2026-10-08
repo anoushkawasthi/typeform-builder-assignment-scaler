@@ -29,6 +29,8 @@
   --color-danger: #c74e43;
   --color-danger-text: #913b21;
   --color-chart: #a566bc;
+  /* A dark shade of the chart colour, for the numbers printed beside the bars. */
+  --color-chart-text: #6b3a80;
 
   /* Form theme: the base colours come from the per-form variables... */
   --color-form-bg: var(--form-bg);

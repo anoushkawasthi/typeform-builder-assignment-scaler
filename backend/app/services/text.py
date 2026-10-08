@@ -6,7 +6,8 @@ What it does:   titles, descriptions and choice labels may contain **bold** and 
                 returns the text without them.
 Depends on:     nothing.
 Depended on by: presenters.py (answers shown in results), services/stats.py (chart
-                labels), routers/responses.py (CSV export).
+                labels), routers/responses.py and services/export.py (the
+                responses table and its downloads).
 
 The frontend draws the markers as real bold and italic on the public form
 (frontend/src/lib/formatted-text.tsx, which uses the same pattern). Places that need

@@ -106,6 +106,11 @@ def present_form_detail(db: Session, form: Form) -> schemas.FormDetailOut:
     for question in snapshot.active_questions(form):
         questions.append(present_question(question, answer_counts.get(question.id, 0)))
 
+    removed_on_publish = snapshot.list_removed_with_answers(db, form)
+    answers_lost_on_publish = 0
+    for removed in removed_on_publish:
+        answers_lost_on_publish += removed["answer_count"]
+
     return schemas.FormDetailOut(
         id=form.id,
         public_id=form.public_id,
@@ -113,7 +118,8 @@ def present_form_detail(db: Session, form: Form) -> schemas.FormDetailOut:
         status=form.status,
         response_count=count_submitted_responses(db, form.id),
         has_unpublished_changes=snapshot.has_unpublished_changes(form),
-        answers_lost_on_publish=snapshot.count_answers_lost_on_publish(db, form),
+        answers_lost_on_publish=answers_lost_on_publish,
+        removed_on_publish=removed_on_publish,
         theme=present_theme(form),
         welcome_enabled=form.welcome_enabled,
         welcome_title=form.welcome_title,

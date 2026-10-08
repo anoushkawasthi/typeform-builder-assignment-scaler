@@ -3,10 +3,10 @@ snapshot.py — publishing a form.
 
 What it does:   builds the frozen copy of a form that respondents see, and runs the
                 publish / unpublish steps.
-Depends on:     models.py.
+Depends on:     models.py, services/text.py.
 Depended on by: routers/forms.py (publish, unpublish, delete rules),
-                routers/questions.py (delete rules), routers/public.py and
-                routers/responses.py (read the snapshot).
+                routers/questions.py (delete rules), routers/public.py,
+                routers/responses.py and services/export.py (read the snapshot).
 
 Why a snapshot exists at all:
     Like Typeform, edits in the builder are a draft. They must not reach people who are
@@ -34,6 +34,7 @@ from app.models import (
     QuestionChoice,
     utc_now,
 )
+from app.services.text import strip_formatting
 
 
 def active_questions(form: Form) -> list[Question]:
@@ -129,6 +130,13 @@ def snapshot_questions(form: Form) -> list[dict]:
     return form.published_snapshot["questions"]
 
 
+def snapshot_thank_you_title(form: Form) -> str:
+    """The published ending's title, or an empty string if never published."""
+    if form.published_snapshot is None:
+        return ""
+    return form.published_snapshot["thank_you_title"]
+
+
 def is_question_in_snapshot(form: Form, question_id: int) -> bool:
     for question in snapshot_questions(form):
         if question["id"] == question_id:
@@ -151,20 +159,40 @@ def has_unpublished_changes(form: Form) -> bool:
     return form.updated_at > form.published_at
 
 
-def count_answers_lost_on_publish(db: Session, form: Form) -> int:
+def list_removed_with_answers(db: Session, form: Form) -> list[dict]:
     """
-    How many stored answers the next publish will permanently remove.
+    The questions and choices deleted from the draft that people had already answered,
+    each with the number of stored answers the next publish will permanently remove.
 
-    Why it is needed: the builder shows this number in the publish confirmation, so data
-    is never destroyed without the creator being told.
+    Why it is needed: the builder shows this list in the publish confirmation, so data
+    is never destroyed without the creator being told exactly what and why. The deletion
+    may have happened many edits ago, so a bare number would look unrelated to the edit
+    being published.
     """
-    answers_of_deleted_questions = db.scalar(
-        select(func.count(Answer.id))
-        .join(Question, Answer.question_id == Question.id)
+    removed = []
+
+    # The inner joins leave out anything nobody answered: deleting that loses nothing.
+    deleted_questions = db.execute(
+        select(Question.title, func.count(Answer.id))
+        .join(Answer, Answer.question_id == Question.id)
         .where(Question.form_id == form.id, Question.deleted_at.is_not(None))
-    )
-    picks_of_deleted_choices = db.scalar(
-        select(func.count())
+        .group_by(Question.id)
+        .order_by(Question.id)
+    ).all()
+    for question_title, answer_count in deleted_questions:
+        removed.append(
+            {
+                "kind": "question",
+                "label": strip_formatting(question_title),
+                "question_title": strip_formatting(question_title),
+                "answer_count": answer_count,
+            }
+        )
+
+    # A deleted choice of a question that itself still exists. (If the whole question
+    # was deleted, it is already in the list above.)
+    deleted_choices = db.execute(
+        select(QuestionChoice.label, Question.title, func.count())
         .select_from(AnswerChoice)
         .join(QuestionChoice, AnswerChoice.choice_id == QuestionChoice.id)
         .join(Question, QuestionChoice.question_id == Question.id)
@@ -173,8 +201,20 @@ def count_answers_lost_on_publish(db: Session, form: Form) -> int:
             Question.deleted_at.is_(None),
             QuestionChoice.deleted_at.is_not(None),
         )
-    )
-    return answers_of_deleted_questions + picks_of_deleted_choices
+        .group_by(QuestionChoice.id)
+        .order_by(QuestionChoice.id)
+    ).all()
+    for choice_label, question_title, answer_count in deleted_choices:
+        removed.append(
+            {
+                "kind": "choice",
+                "label": strip_formatting(choice_label),
+                "question_title": strip_formatting(question_title),
+                "answer_count": answer_count,
+            }
+        )
+
+    return removed
 
 
 def touch_form(form: Form) -> None:

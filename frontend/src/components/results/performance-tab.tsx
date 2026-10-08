@@ -27,7 +27,7 @@ export function PerformanceTab({ summary }: { summary: FormSummary }) {
   const completionRate = summary.completion_rate === null ? "-" : `${Math.round(summary.completion_rate)}%`;
 
   return (
-    <div className="mx-auto max-w-[1192px]">
+    <div className="mx-auto w-full max-w-[1192px]">
       <h1 className="text-[24px] leading-8 text-admin-text">Form performance</h1>
       <p className="mt-2 text-[16px] leading-6 text-admin-muted">Key metrics that show how your form is doing.</p>
 

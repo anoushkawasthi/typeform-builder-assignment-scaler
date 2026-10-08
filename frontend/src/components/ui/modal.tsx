@@ -68,7 +68,9 @@ export function Modal({
             </div>
             <Dialog.Close
               aria-label="Close"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
+              // Radix moves keyboard focus to this button when the dialog opens. The grey
+              // background marks it; the heavy outline would draw the eye to "close".
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover focus-visible:bg-admin-hover focus-visible:outline-none"
             >
               <X className="h-4 w-4" />
             </Dialog.Close>

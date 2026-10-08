@@ -42,8 +42,8 @@ export function ResultsScreen({ formId }: { formId: number }) {
         onRename={(title) => editor.updateForm({ title })}
       />
 
-      <main className="mx-4 mb-4 flex-1 overflow-hidden rounded-xl bg-admin-panel">
-        <div role="tablist" className="flex gap-6 border-b border-white px-8">
+      <main className="mx-4 mb-4 flex flex-1 flex-col overflow-hidden rounded-xl bg-admin-panel">
+        <div role="tablist" className="flex gap-7 border-b border-white px-9">
           <SubTab
             label="Form performance"
             isActive={activeTab === "performance"}
@@ -57,7 +57,9 @@ export function ResultsScreen({ formId }: { formId: number }) {
           />
         </div>
 
-        <div className="p-4 sm:p-8">
+        {/* The Responses table runs almost edge to edge, so that tab gets a thinner
+            margin than the two that are a centred column of cards. */}
+        <div className={"flex flex-1 flex-col " + (activeTab === "responses" ? "px-4 pb-4 pt-5" : "p-4 sm:p-8")}>
           {activeTab === "performance" &&
             (summaryQuery.data === undefined ? (
               <p className="text-admin-muted">{summaryQuery.isError ? "Could not load the numbers." : "Loading..."}</p>

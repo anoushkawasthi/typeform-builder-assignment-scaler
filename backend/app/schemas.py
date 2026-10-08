@@ -146,6 +146,18 @@ class FormListItemOut(BaseModel):
     updated_at: datetime
 
 
+class RemovedOnPublishOut(BaseModel):
+    """A question or choice deleted from the draft that still has stored answers."""
+
+    # "question" or "choice".
+    kind: str
+    # The deleted question's title, or the deleted choice's label.
+    label: str
+    # The question concerned; for a deleted choice, the question it belonged to.
+    question_title: str
+    answer_count: int
+
+
 class FormDetailOut(BaseModel):
     """Everything the builder needs to edit one form."""
 
@@ -158,6 +170,8 @@ class FormDetailOut(BaseModel):
     # Number of stored answers that will be permanently removed on the next publish,
     # because their question or choice was deleted from the draft.
     answers_lost_on_publish: int
+    # The same thing item by item, so the publish confirmation can name what was deleted.
+    removed_on_publish: list[RemovedOnPublishOut]
     theme: ThemeOut
     welcome_enabled: bool
     welcome_title: str
@@ -293,6 +307,8 @@ class ResponsesTableOut(BaseModel):
     """Table view: the questions are the columns, each response is a row."""
 
     questions: list[PublicQuestionOut]
+    # Title of the published thank-you screen, shown in the table's "Ending" column.
+    ending_title: str
     responses: list[ResponseOut]
 
 

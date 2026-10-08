@@ -129,32 +129,47 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
     }
   }
 
-  /** Validate the current question, then go to the next one or submit. */
-  const advance = useCallback(() => {
-    if (isFinished || isSubmitting) {
-      return;
-    }
-    // Nothing to validate on the welcome screen: Start simply shows question 1.
-    if (currentIndex === WELCOME_INDEX) {
-      goToIndex(0, 1);
-      return;
-    }
-    const question = questions[currentIndex];
-    const message = validateAnswer(question, answersRef.current[question.id]);
-    if (message !== null) {
-      setError(message);
-      return;
-    }
-    // Usually the next question; a logic jump may send us further ahead or to the end.
-    const nextIndex = nextQuestionIndex(questions, currentIndex, answersRef.current[question.id]);
-    if (nextIndex >= questions.length) {
-      void submit();
-    } else {
-      goToIndex(nextIndex, 1);
-    }
+  /**
+   * Validate the current question, then go to the next one. When there is no next
+   * question the form is submitted, but only if `canSubmit` allows it.
+   */
+  const moveOn = useCallback(
+    (canSubmit: boolean) => {
+      if (isFinished || isSubmitting) {
+        return;
+      }
+      // Nothing to validate on the welcome screen: Start simply shows question 1.
+      if (currentIndex === WELCOME_INDEX) {
+        goToIndex(0, 1);
+        return;
+      }
+      const question = questions[currentIndex];
+      const message = validateAnswer(question, answersRef.current[question.id]);
+      if (message !== null) {
+        setError(message);
+        return;
+      }
+      // Usually the next question; a logic jump may send us further ahead or to the end.
+      const nextIndex = nextQuestionIndex(questions, currentIndex, answersRef.current[question.id]);
+      if (nextIndex < questions.length) {
+        goToIndex(nextIndex, 1);
+      } else if (canSubmit) {
+        void submit();
+      }
+    },
     // `submit` and `goToIndex` only use state setters and refs, which never change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, isFinished, isSubmitting, questions]);
+    [currentIndex, isFinished, isSubmitting, questions],
+  );
+
+  /** Enter, OK, Submit and picking a choice: go on, and submit at the end. */
+  const advance = useCallback(() => moveOn(true), [moveOn]);
+
+  /**
+   * The ArrowDown key: go on, but never submit. Sending the form should be a
+   * deliberate act (Enter or the Submit button), not a stray press of an arrow key.
+   */
+  const goForward = useCallback(() => moveOn(false), [moveOn]);
 
   const goBack = useCallback(() => {
     if (isFinished || isSubmitting || currentIndex <= 0) {
@@ -176,7 +191,6 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
       const target = event.target instanceof HTMLElement ? event.target : document.body;
       const role = target.getAttribute("role");
       const isTextarea = target.tagName === "TEXTAREA";
-      const isDropdown = role === "combobox";
       const isChoice = role === "radio" || role === "checkbox";
 
       // Ctrl+Enter (Cmd+Enter on a Mac) always confirms, wherever the cursor is. On the
@@ -201,14 +215,24 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
         return;
       }
 
-      // Arrow keys move between questions, except where they have their own job:
-      // moving the cursor in a long answer, or moving through dropdown options.
-      if (isTextarea || isDropdown) {
-        return;
+      // Arrow keys move between questions. (A dropdown uses them to move through its
+      // options and stops the event itself, so those presses never arrive here.)
+      //
+      // In a long answer they first move the cursor, and change question only when the
+      // cursor can go no further: ArrowUp at the very start, ArrowDown at the very end.
+      if (target instanceof HTMLTextAreaElement) {
+        const isAtStart = target.selectionStart === 0 && target.selectionEnd === 0;
+        const isAtEnd = target.selectionStart === target.value.length;
+        if (event.key === "ArrowUp" && !isAtStart) {
+          return;
+        }
+        if (event.key === "ArrowDown" && !isAtEnd) {
+          return;
+        }
       }
       if (event.key === "ArrowDown") {
         event.preventDefault();
-        advance();
+        goForward();
       } else if (event.key === "ArrowUp") {
         event.preventDefault();
         goBack();
@@ -217,7 +241,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [advance, goBack]);
+  }, [advance, goForward, goBack]);
 
   // Progress counts answered questions, as Typeform does, not the position on screen.
   let answeredCount = 0;

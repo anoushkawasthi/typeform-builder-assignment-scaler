@@ -171,9 +171,17 @@ export function getResponses(formId: number) {
   return request<ResponsesTable>("GET", `/api/forms/${formId}/responses`);
 }
 
-/** Address of the CSV download. Used as a plain link, so the browser saves the file. */
-export function responsesCsvUrl(formId: number) {
-  return `${API_URL}/api/forms/${formId}/responses.csv`;
+export type ExportFormat = "csv" | "xlsx";
+
+/**
+ * Address of the responses download. Used as a plain link, so the browser saves the
+ * file. `responseIds` limits the file to those responses; an empty list means all.
+ */
+export function responsesExportUrl(formId: number, format: ExportFormat, responseIds: number[]) {
+  // The server reads a repeated parameter as a list: ?ids=4&ids=9
+  const query = responseIds.map((id) => `ids=${id}`).join("&");
+  const address = `${API_URL}/api/forms/${formId}/responses.${format}`;
+  return query === "" ? address : `${address}?${query}`;
 }
 
 export function getSummary(formId: number) {
