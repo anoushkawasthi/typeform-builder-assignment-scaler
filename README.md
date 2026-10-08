@@ -4,7 +4,7 @@ A working clone of Typeform's core workflow: build a form in a three-panel build
 publish it to a shareable link, collect answers one question at a time, and review the
 results.
 
-- **Live demo:** https://forms.ikyano.tech
+- **Live demo:** https://typeform-replica.ikyano.tech
 - **API docs (auto-generated):** https://forms-api.ikyano.tech/docs
 - **Sample public forms:** `/to/demoFdbk` (customer feedback) and `/to/demoEvnt` (event RSVP)
 
@@ -235,7 +235,7 @@ cd typeform-builder-assignment-scaler/backend
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 DATABASE_URL=sqlite:////absolute/path/to/app.db \
-ALLOWED_ORIGINS=https://forms.ikyano.tech \
+ALLOWED_ORIGINS=https://typeform-replica.ikyano.tech \
 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8017
 ```
 
