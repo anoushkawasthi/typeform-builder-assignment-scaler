@@ -125,7 +125,8 @@ export function PublishButton({ form, editor }: PublishButtonProps) {
             and permanently deletes those answers:
           </p>
           <ul className="mt-4 list-disc pl-10">
-            {form.removed_on_publish.map((removed, index) => (
+            {/* `?? []`: an API that has not been updated yet does not send this list. */}
+            {(form.removed_on_publish ?? []).map((removed, index) => (
               <li key={index}>{describeRemoved(removed)}</li>
             ))}
           </ul>
