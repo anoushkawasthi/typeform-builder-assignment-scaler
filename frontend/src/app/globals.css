@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/*
+ * globals.css — design tokens. See docs/03-design-system.md for where each value was
+ * measured.
+ *
+ * There are two looks in the app:
+ *   1. "admin"  — the creator's screens (form list, builder, results). Fixed colours.
+ *   2. "form"   — what a respondent sees. Its colours come from CSS variables
+ *                 (--form-bg, --form-question, ...) that are set per form by
+ *                 components/respondent/form-theme.tsx, so a form's theme is just a
+ *                 different set of variable values.
+ *
+ * Everything inside @theme becomes a Tailwind class, e.g. --color-admin-text gives
+ * `text-admin-text` and `bg-admin-text`.
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Admin theme */
+  --color-admin-text: #3c323e;
+  --color-admin-muted: #655d67;
+  --color-admin-active: #4c414e;
+  --color-admin-panel: #f7f7f8;
+  --color-admin-border: rgba(81, 76, 84, 0.15);
+  --color-admin-border-soft: rgba(86, 82, 90, 0.08);
+  --color-admin-hover: rgba(87, 84, 91, 0.06);
+  --color-admin-ring: rgba(84, 80, 88, 0.09);
+  --color-status-green: #1e7b57;
+  --color-status-green-bg: #e9f6ef;
+  --color-danger: #c0392b;
+  --color-chart: #a566bc;
+
+  /* Form theme: the base colours come from the per-form variables... */
+  --color-form-bg: var(--form-bg);
+  --color-form-question: var(--form-question);
+  --color-form-answer: var(--form-answer);
+  --color-form-button: var(--form-button);
+  --color-form-button-text: var(--form-button-text);
+
+  /* ...and the lighter tints are mixed from the answer colour, so a custom theme
+     gets matching tints for free. The number is the strength in percent. */
+  --color-form-answer-6: color-mix(in srgb, var(--form-answer) 6%, transparent);
+  --color-form-answer-10: color-mix(in srgb, var(--form-answer) 10%, transparent);
+  --color-form-answer-24: color-mix(in srgb, var(--form-answer) 24%, transparent);
+  --color-form-answer-30: color-mix(in srgb, var(--form-answer) 30%, transparent);
+  --color-form-answer-40: color-mix(in srgb, var(--form-answer) 40%, transparent);
+  --color-form-answer-60: color-mix(in srgb, var(--form-answer) 60%, transparent);
+  --color-form-answer-80: color-mix(in srgb, var(--form-answer) 80%, transparent);
+  --color-form-question-80: color-mix(in srgb, var(--form-question) 80%, transparent);
+
+  --color-form-error: #913b21;
+  --color-form-error-bg: rgba(248, 228, 227, 0.6);
+
+  /* The admin UI uses the visitor's system font, as Typeform's does. */
+  --font-admin: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-form: var(--form-font);
+
+  /* Typeform's two easing curves. */
+  --ease-form: cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Defaults for the form variables, used until a form's own theme is applied. */
+:root {
+  --form-bg: #fafafa;
+  --form-question: #2a222b;
+  --form-answer: #2a222b;
+  --form-button: #2a222b;
+  --form-button-text: #fafafa;
+  --form-font: var(--font-inter), system-ui, sans-serif;
+}
+
+/* Base rules live in Tailwind's `base` layer so that utility classes on an element
+   (for example `outline-none` on the form's text fields) can override them. */
+@layer base {
+  body {
+    background: #ffffff;
+    color: #3c323e;
+    font-family: var(--font-admin);
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  /* Keyboard users get a clear focus ring everywhere; mouse users do not see it. */
+  :focus-visible {
+    outline: 2px solid #3c323e;
+    outline-offset: 2px;
+  }
+
+  /* Number inputs: hide the browser's up/down arrows, which Typeform does not show. */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* The brief blink of a choice when it is picked, just before the form moves on. */
+@keyframes choice-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.animate-choice-blink {
+  animation: choice-blink 0.3s linear;
 }

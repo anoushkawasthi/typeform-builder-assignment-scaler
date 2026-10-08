@@ -1,0 +1,57 @@
+"use client";
+
+/**
+ * text-answer.tsx — the single-line answer field.
+ *
+ * What it does:   the large underlined input used by short text, email and number
+ *                 questions. The three differ only in input type and placeholder.
+ * Depends on:     question-answer.tsx (props).
+ * Depended on by: question-answer.tsx.
+ */
+
+import { useEffect, useRef } from "react";
+
+import type { QuestionAnswerProps } from "./question-answer";
+
+interface TextAnswerProps extends QuestionAnswerProps {
+  inputType: "text" | "email" | "number";
+  placeholder: string;
+}
+
+// Shared by the long-text field too, so both underlined fields look identical.
+export const UNDERLINED_FIELD_CLASSES =
+  "block w-full bg-transparent py-2 font-form text-[20px] leading-[28px] text-form-answer outline-none " +
+  "placeholder:text-form-answer-30 sm:text-[26px] sm:leading-[34px] " +
+  // The underline is a shadow, not a border, so it can thicken on focus without
+  // shifting the layout by a pixel.
+  "shadow-[0_1px_0_0_color-mix(in_srgb,var(--form-answer)_60%,transparent)] " +
+  "focus:shadow-[0_2px_0_0_var(--form-answer)] " +
+  "transition-shadow duration-200";
+
+export function TextAnswer({ value, onChange, isActive, isInteractive, inputType, placeholder }: TextAnswerProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Put the cursor in the field as soon as its question slides in, so the respondent
+  // can type straight away. `preventScroll` stops the browser jumping mid-animation.
+  useEffect(() => {
+    if (isActive && isInteractive) {
+      inputRef.current?.focus({ preventScroll: true });
+    }
+  }, [isActive, isInteractive]);
+
+  return (
+    <input
+      ref={inputRef}
+      type={inputType}
+      // Shows the numeric keypad on phones for number questions.
+      inputMode={inputType === "number" ? "decimal" : undefined}
+      value={value?.text ?? ""}
+      placeholder={placeholder}
+      readOnly={!isInteractive}
+      tabIndex={isInteractive && isActive ? 0 : -1}
+      autoComplete={inputType === "email" ? "email" : "off"}
+      onChange={(event) => onChange({ text: event.target.value })}
+      className={UNDERLINED_FIELD_CLASSES}
+    />
+  );
+}
