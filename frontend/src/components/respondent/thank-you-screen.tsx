@@ -23,19 +23,20 @@ export function ThankYouScreen({ title, text }: ThankYouScreenProps) {
     <div className="flex flex-col items-center text-center font-form">
       {/* A thin ring and tick in the button colour, as on Typeform's ending. */}
       <span className="flex h-[92px] w-[92px] items-center justify-center rounded-full border-[4px] border-form-button text-form-button">
-        <Check aria-hidden="true" className="h-12 w-12" strokeWidth={2.25} />
+        {/* Drawn large with a thin line: the tick is about 44px wide with a 4px stroke. */}
+        <Check aria-hidden="true" className="h-16 w-16" strokeWidth={1.5} />
       </span>
-      <h1 className="mt-5 text-[24px] leading-[32px] text-form-question @2xl:text-[32px] @2xl:leading-[40px]">
+      <h1 className="mt-3 text-[24px] leading-[32px] tracking-[-0.5px] text-form-question @2xl:text-[32px] @2xl:leading-[40px] @2xl:tracking-[-0.75px]">
         <FormattedText text={title} />
       </h1>
       {text !== "" && (
-        <p className="whitespace-pre-line text-[24px] leading-[32px] text-form-question @2xl:text-[32px] @2xl:leading-[40px]">
+        <p className="whitespace-pre-line text-[24px] leading-[32px] tracking-[-0.5px] text-form-question @2xl:text-[32px] @2xl:leading-[40px] @2xl:tracking-[-0.75px]">
           <FormattedText text={text} />
         </p>
       )}
       <Link
         href="/"
-        className="mt-8 inline-flex h-10 items-center rounded-lg bg-form-button px-4 text-[18px] font-semibold text-form-button-text transition-opacity duration-200 ease-form hover:opacity-80"
+        className="mt-8 inline-flex h-10 items-center rounded-lg bg-form-button px-4 text-[18px] font-semibold text-form-button-text-90 transition-opacity duration-200 ease-form hover:opacity-80"
       >
         Create your own form
       </Link>

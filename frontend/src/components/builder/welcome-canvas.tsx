@@ -32,6 +32,7 @@ export function WelcomeCanvas({ form, onUpdate }: WelcomeCanvasProps) {
           title={form.welcome_title}
           text={form.welcome_text}
           buttonText={form.welcome_button_text}
+          questionCount={form.questions.length}
           titleContent={
             <AutosaveText
               value={form.welcome_title}

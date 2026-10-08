@@ -153,6 +153,11 @@ export function QuestionScreen({
           {isLastQuestion && <p className="mt-2 text-[14px] leading-[18px] text-form-answer-80">Never submit passwords!</p>}
         </div>
       )}
+
+      {/* On a phone the same warning sits under the answer, as the button is elsewhere. */}
+      {!hideButton && error === null && isLastQuestion && (
+        <p className="mt-8 text-[14px] leading-[18px] text-form-answer-80 @2xl:hidden">Never submit passwords!</p>
+      )}
     </div>
   );
 }

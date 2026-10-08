@@ -7,7 +7,7 @@
  * Depended on by: form-flow.tsx.
  */
 
-import { ChevronDown, ChevronLeft, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronUp, Clock } from "lucide-react";
 import Link from "next/link";
 
 interface FlowFooterProps {
@@ -21,8 +21,12 @@ interface FlowFooterProps {
   onPrevious: () => void;
   /** The wide-screen down arrow: go to the next question, never submit. */
   onNext: () => void;
-  /** The phone layout's big button: "OK", or "Submit" on the last question. */
+  /** Phone layout: whether the big bottom button is shown (not on the thank-you screen). */
+  showAdvance: boolean;
+  /** Its text: "OK", "Submit" on the last question, or the welcome screen's button text. */
   advanceLabel: string;
+  /** Phone layout: a small line above the button (the welcome screen's time estimate). */
+  advanceNote?: string;
   onAdvance: () => void;
   isSubmitting: boolean;
 }
@@ -38,7 +42,9 @@ export function FlowFooter({
   isFinished,
   onPrevious,
   onNext,
+  showAdvance,
   advanceLabel,
+  advanceNote,
   onAdvance,
   isSubmitting,
 }: FlowFooterProps) {
@@ -46,7 +52,7 @@ export function FlowFooter({
   // bottom with its tagline and a small button.
   if (isFinished) {
     return (
-      <div className="absolute inset-x-0 bottom-0 z-10 flex h-14 items-center justify-end gap-3 border-t border-black/10 bg-[#F1F1F1] px-4 font-form">
+      <div className="absolute inset-x-0 bottom-0 z-10 flex h-[52px] items-center justify-end gap-3 border-t border-black/10 bg-[#F1F1F1] px-4 font-form">
         <span className="hidden text-[14px] text-black @2xl:inline">How you ask is everything</span>
         <Link href="/" className="flex h-6 items-center rounded bg-form-button px-2 text-[11px] text-form-button-text">
           Create a&nbsp;<strong className="font-semibold">form</strong>
@@ -92,9 +98,15 @@ export function FlowFooter({
           reaches it, with a back button beside it from the second question on. The
           button under the answer is hidden at this size (see question-screen.tsx). */}
       <div className="absolute inset-x-0 bottom-0 z-10 bg-form-bg px-8 pb-4 font-form @2xl:hidden">
-        {showNavigation && (
+        {advanceNote !== undefined && (
+          <p className="mb-4 flex items-center justify-center gap-1 text-[14px] leading-[18px] text-form-question">
+            <Clock aria-hidden="true" className="h-3 w-3" strokeWidth={2.5} />
+            {advanceNote}
+          </p>
+        )}
+        {showAdvance && (
           <div className="flex gap-2">
-            {canGoBack && (
+            {showNavigation && canGoBack && (
               <button
                 type="button"
                 aria-label="Previous question"

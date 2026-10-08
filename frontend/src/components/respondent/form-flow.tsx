@@ -28,7 +28,7 @@ import { FormTheme } from "./form-theme";
 import { ProgressBar } from "./progress-bar";
 import { QuestionScreen } from "./question-screen";
 import { ThankYouScreen } from "./thank-you-screen";
-import { WelcomeScreen } from "./welcome-screen";
+import { timeToComplete, WelcomeScreen } from "./welcome-screen";
 
 interface FormFlowProps {
   form: FillableForm;
@@ -258,6 +258,16 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
   const isLastQuestion =
     isOnQuestion && nextQuestionIndex(questions, currentIndex, answers[questions[currentIndex].id]) >= questions.length;
 
+  // Text of the phone layout's bottom button (see flow-footer.tsx).
+  let advanceLabel = "OK";
+  if (isOnWelcome && welcome !== null) {
+    advanceLabel = welcome.button_text;
+  } else if (isSubmitting) {
+    advanceLabel = "Submitting...";
+  } else if (isLastQuestion) {
+    advanceLabel = "Submit";
+  }
+
   const slideDistance = prefersReducedMotion ? "0%" : SLIDE_DISTANCE;
   const slideVariants = {
     // `slideDirection` is the value passed as `custom` below.
@@ -311,7 +321,13 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
               {isFinished ? (
                 <ThankYouScreen title={form.thank_you_title} text={form.thank_you_text} />
               ) : isOnWelcome && welcome !== null ? (
-                <WelcomeScreen title={welcome.title} text={welcome.text} buttonText={welcome.button_text} onStart={advance} />
+                <WelcomeScreen
+                  title={welcome.title}
+                  text={welcome.text}
+                  buttonText={welcome.button_text}
+                  questionCount={questions.length}
+                  onStart={advance}
+                />
               ) : (
                 <QuestionScreen
                   question={questions[currentIndex]}
@@ -338,7 +354,9 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
         isFinished={isFinished}
         onPrevious={goBack}
         onNext={goForward}
-        advanceLabel={isSubmitting ? "Submitting..." : isLastQuestion ? "Submit" : "OK"}
+        showAdvance={!isFinished}
+        advanceLabel={advanceLabel}
+        advanceNote={isOnWelcome ? timeToComplete(questions.length) : undefined}
         onAdvance={advance}
         isSubmitting={isSubmitting}
       />
