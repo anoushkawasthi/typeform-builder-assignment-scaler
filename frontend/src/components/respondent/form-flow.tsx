@@ -166,8 +166,9 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
   const advance = useCallback(() => moveOn(true), [moveOn]);
 
   /**
-   * The ArrowDown key: go on, but never submit. Sending the form should be a
-   * deliberate act (Enter or the Submit button), not a stray press of an arrow key.
+   * The ArrowDown key, and the automatic move after picking a choice: go on, but never
+   * submit. Sending the form should be a deliberate act (Enter or the Submit button),
+   * not a stray key or the last tap on a choice.
    */
   const goForward = useCallback(() => moveOn(false), [moveOn]);
 
@@ -335,6 +336,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
                   value={answers[questions[currentIndex].id]}
                   onChange={(value) => handleAnswerChange(questions[currentIndex].id, value)}
                   onCommit={advance}
+                  onAutoAdvance={goForward}
                   isActive={true}
                   isInteractive={true}
                   error={error}

@@ -50,6 +50,18 @@ export function Modal({
         <Dialog.Content
           // Radix warns if there is no description; undefined tells it that is intended.
           aria-describedby={description === undefined ? undefined : "modal-description"}
+          // Radix puts the keyboard focus on the first button, which is "close". A dialog
+          // with a text box (Rename, for one) should start in the box with its text
+          // selected, so the new name can be typed straight away.
+          onOpenAutoFocus={(event) => {
+            const dialog = event.currentTarget as HTMLElement;
+            const textBox = dialog.querySelector<HTMLInputElement>('input[type="text"], input:not([type]), textarea');
+            if (textBox !== null) {
+              event.preventDefault();
+              textBox.focus();
+              textBox.select();
+            }
+          }}
           className={
             "fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 " +
             "overflow-y-auto rounded-2xl shadow-[0_0_0_3px_var(--color-admin-ring)] " +

@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { AccountControls } from "@/components/ui/account-controls";
 import { Button } from "@/components/ui/button";
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { Modal, ModalActions } from "@/components/ui/modal";
@@ -229,12 +230,7 @@ export function FormsListScreen() {
             <Blocks aria-hidden="true" className="h-4 w-4" />
             Integrations
           </Button>
-          <span
-            title="Demo Creator"
-            className="ml-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#BDDDF9] text-[12px] font-medium text-admin-text"
-          >
-            DC
-          </span>
+          <AccountControls />
         </div>
       </header>
 
@@ -300,7 +296,7 @@ export function FormsListScreen() {
           </aside>
 
           {/* Main */}
-          <main className="min-w-0 flex-1 p-4 sm:p-10">
+          <main className="min-w-0 flex-1 p-4 sm:px-10 sm:pb-10 sm:pt-[43px]">
             <div className="flex flex-wrap items-center gap-2 border-b border-admin-border pb-6">
               <h1 className="mr-2 text-[24px] leading-8 text-admin-text">My workspace</h1>
               <Button variant="ghost" iconOnly aria-label="Workspace settings" onClick={() => showComingSoon("Workspace settings")}>

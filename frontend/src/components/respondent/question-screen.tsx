@@ -26,8 +26,14 @@ interface QuestionScreenProps {
   number: number;
   value: AnswerValue | undefined;
   onChange: (value: AnswerValue) => void;
-  /** Move to the next question (or submit, on the last one). */
+  /** Move to the next question (or submit, on the last one). The OK / Submit button. */
   onCommit: () => void;
+  /**
+   * What picking a choice does by itself. The form passes "next question, but never
+   * submit", so an answer on the last question is not sent until Submit is pressed.
+   * Left out, it is the same as `onCommit`.
+   */
+  onAutoAdvance?: () => void;
   isActive: boolean;
   isInteractive: boolean;
   /** Validation message to show instead of the button, if any. */
@@ -48,6 +54,7 @@ export function QuestionScreen({
   value,
   onChange,
   onCommit,
+  onAutoAdvance,
   isActive,
   isInteractive,
   error = null,
@@ -104,7 +111,7 @@ export function QuestionScreen({
             question={question}
             value={value}
             onChange={onChange}
-            onCommit={onCommit}
+            onCommit={onAutoAdvance ?? onCommit}
             isActive={isActive}
             isInteractive={isInteractive}
           />
