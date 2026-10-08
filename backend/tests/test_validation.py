@@ -115,3 +115,36 @@ def test_submission_rejects_unknown_and_duplicate_questions():
     _, errors = validate_submission(questions, answers)
     messages = sorted(error.message for error in errors)
     assert messages == sorted([validation.MESSAGE_DUPLICATE_ANSWER, validation.MESSAGE_UNKNOWN_QUESTION])
+
+
+def test_rule_matching_by_type():
+    from app.services import logic
+
+    choice_rule = {"operator": "is_not", "compare_choice_id": 10, "compare_number": None, "compare_boolean": None}
+    assert logic.rule_matches(choice_rule, None, None, [11]) is True
+    assert logic.rule_matches(choice_rule, None, None, [10]) is False
+    # No answer at all never matches a comparison.
+    assert logic.rule_matches(choice_rule, None, None, []) is False
+
+    number_rule = {"operator": "greater_than", "compare_choice_id": None, "compare_number": 3, "compare_boolean": None}
+    assert logic.rule_matches(number_rule, 4, None, []) is True
+    assert logic.rule_matches(number_rule, 3, None, []) is False
+
+    always_rule = {"operator": "always", "compare_choice_id": None, "compare_number": None, "compare_boolean": None}
+    assert logic.rule_matches(always_rule, None, None, []) is True
+
+
+def test_a_jump_that_points_backwards_is_ignored():
+    from app.services import logic
+
+    questions = [
+        make_question("short_text", id=1),
+        make_question("short_text", id=2, logic_jumps=[
+            {"operator": "always", "compare_choice_id": None, "compare_number": None, "compare_boolean": None, "target_question_id": 1}
+        ]),
+        make_question("short_text", id=3),
+    ]
+    # From question 2 the backward rule is skipped and the form just continues to 3.
+    assert logic.next_question_index(questions, 1, None, None, []) == 2
+    # From the last question the form ends.
+    assert logic.next_question_index(questions, 2, None, None, []) == logic.END_OF_FORM

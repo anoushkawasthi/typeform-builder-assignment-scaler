@@ -3,7 +3,7 @@
  *
  * What it does:   decides whether an answer is empty or invalid, and converts the
  *                 answers held in memory into the body of the submit request.
- * Depends on:     lib/types.ts.
+ * Depends on:     lib/types.ts, lib/logic.ts.
  * Depended on by: components/respondent/form-flow.tsx.
  *
  * The same rules exist on the server (backend/app/services/validation.py), which is the
@@ -11,6 +11,7 @@
  * feedback instantly instead of after submitting. The messages are kept identical.
  */
 
+import { visitedIndexes } from "./logic";
 import type { AnswerMap, AnswerPayload, AnswerValue, RenderableQuestion } from "./types";
 
 export const MESSAGE_REQUIRED = "Please fill this in";
@@ -71,11 +72,16 @@ export function validateAnswer(question: RenderableQuestion, value: AnswerValue 
 /**
  * Build the list of answers to send. Unanswered questions are left out entirely, which
  * is how the server knows an optional question was skipped.
+ *
+ * Only questions on the respondent's path are included. If they answered a question,
+ * went back, and changed an earlier answer so that a logic jump now skips it, that old
+ * answer is not sent.
  */
 export function toAnswerPayloads(questions: RenderableQuestion[], answers: AnswerMap): AnswerPayload[] {
   const payloads: AnswerPayload[] = [];
 
-  for (const question of questions) {
+  for (const index of visitedIndexes(questions, answers)) {
+    const question = questions[index];
     const value = answers[question.id];
     if (isAnswerEmpty(question, value) || value === undefined) {
       continue;

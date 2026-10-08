@@ -46,6 +46,31 @@ class ChoiceUpdate(BaseModel):
     label: str = Field(max_length=255)
 
 
+LogicOperator = Literal["always", "is", "is_not", "less_than", "greater_than"]
+
+
+class LogicJumpOut(BaseModel):
+    """One rule: if the answer <operator> <compare value>, go to <target>."""
+
+    id: int
+    operator: LogicOperator
+    compare_choice_id: int | None
+    compare_number: float | None
+    compare_boolean: bool | None
+    # None means "jump to the end of the form".
+    target_question_id: int | None
+
+
+class LogicJumpIn(BaseModel):
+    """Body for creating or replacing a rule. Only the compare field that fits the question type is used."""
+
+    operator: LogicOperator = "always"
+    compare_choice_id: int | None = None
+    compare_number: float | None = None
+    compare_boolean: bool | None = None
+    target_question_id: int | None = None
+
+
 class QuestionOut(BaseModel):
     id: int
     type: QuestionType
@@ -56,6 +81,7 @@ class QuestionOut(BaseModel):
     allow_multiple: bool
     rating_max: int
     choices: list[ChoiceOut]
+    logic_jumps: list[LogicJumpOut]
     # How many submitted answers this question has. The builder uses it to warn before
     # deleting and to lock the type.
     answer_count: int
@@ -170,6 +196,8 @@ class PublicQuestionOut(BaseModel):
     allow_multiple: bool
     rating_max: int
     choices: list[ChoiceOut]
+    # Empty by default so snapshots published before logic jumps existed still load.
+    logic_jumps: list[LogicJumpOut] = []
 
 
 class PublicFormOut(BaseModel):

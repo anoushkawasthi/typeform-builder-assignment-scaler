@@ -16,6 +16,7 @@ import type {
   FormListItem,
   FormSummary,
   FormUpdate,
+  LogicJumpInput,
   PublicForm,
   QuestionType,
   QuestionUpdate,
@@ -140,6 +141,20 @@ export function updateChoice(choiceId: number, label: string) {
 
 export function deleteChoice(choiceId: number) {
   return request<FormDetail>("DELETE", `/api/choices/${choiceId}`);
+}
+
+// ---- Logic jumps (creator) -------------------------------------------------------------
+
+export function createLogicJump(questionId: number, rule: LogicJumpInput) {
+  return request<FormDetail>("POST", `/api/questions/${questionId}/logic-jumps`, rule);
+}
+
+export function replaceLogicJump(logicJumpId: number, rule: LogicJumpInput) {
+  return request<FormDetail>("PUT", `/api/logic-jumps/${logicJumpId}`, rule);
+}
+
+export function deleteLogicJump(logicJumpId: number) {
+  return request<FormDetail>("DELETE", `/api/logic-jumps/${logicJumpId}`);
 }
 
 // ---- Results (creator) -----------------------------------------------------------------

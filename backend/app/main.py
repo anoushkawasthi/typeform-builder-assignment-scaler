@@ -3,7 +3,7 @@ main.py — the FastAPI application. Start here when reading the backend.
 
 What it does:   creates the app, allows the frontend's origin to call it (CORS), creates
                 the tables and sample data on first start, and plugs in the routers.
-Depends on:     database.py, models.py, seed.py, and the four routers.
+Depends on:     database.py, models.py, seed.py, and the five routers.
 Depended on by: uvicorn (`uvicorn app.main:app`) and the tests.
 
 Request path:   browser -> router function -> (services for rules, presenters for output)
@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401  (importing registers the tables on Base)
 from app.database import Base, SessionLocal, engine
-from app.routers import forms, public, questions, responses
+from app.routers import forms, logic_jumps, public, questions, responses
 from app.seed import seed_if_empty
 
 # Comma-separated list of sites allowed to call this API from a browser.
@@ -53,6 +53,7 @@ app.add_middleware(
 
 app.include_router(forms.router)
 app.include_router(questions.router)
+app.include_router(logic_jumps.router)
 app.include_router(responses.router)
 app.include_router(public.router)
 

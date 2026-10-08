@@ -26,6 +26,25 @@ export interface Choice {
   label: string;
 }
 
+export type LogicOperator = "always" | "is" | "is_not" | "less_than" | "greater_than";
+
+/**
+ * One logic-jump rule on a question: "if the answer <operator> <value>, go to <target>".
+ * Only one compare field is set, depending on the question type. A null target means
+ * "jump to the end of the form".
+ */
+export interface LogicJump {
+  id: number;
+  operator: LogicOperator;
+  compare_choice_id: number | null;
+  compare_number: number | null;
+  compare_boolean: boolean | null;
+  target_question_id: number | null;
+}
+
+/** A rule being created or replaced: the same fields without the id. */
+export type LogicJumpInput = Omit<LogicJump, "id">;
+
 export interface Theme {
   background_color: string;
   question_color: string;
@@ -49,6 +68,7 @@ export interface RenderableQuestion {
   allow_multiple: boolean;
   rating_max: number;
   choices: Choice[];
+  logic_jumps: LogicJump[];
 }
 
 /** A question in the builder (the draft). */

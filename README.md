@@ -19,8 +19,8 @@ The demo opens straight into the workspace of a default creator; there is no log
 | Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), Sonner (toasts), Lucide (icons) |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2 |
 | Database | SQLite |
-| Tests | pytest (25 tests: validation rules and API routes) |
-| Hosting | Frontend on Vercel; backend in Docker on a VPS behind a Cloudflare Tunnel, SQLite on a Docker volume |
+| Tests | pytest (31 tests: validation rules, logic jumps and API routes) |
+| Hosting | Frontend on Vercel; backend as a systemd service on a VPS behind a Cloudflare Tunnel, SQLite on the server's disk (a Dockerfile and Compose file are included as an alternative) |
 
 ## Features
 
@@ -41,11 +41,16 @@ bar; validation in the browser and again on the server; thank-you screen; no log
 (counts per choice, yes/no split, rating spread, averages, latest text answers); a table
 of responses; a single response in full; CSV export.
 
+**Logic jumps** — per-question rules such as "if the answer is No, go to question 6" or
+"if the rating is less than 3, end the form"; edited in the builder's Logic panel, shown
+together on the Workflow tab, followed in the form and re-checked on the server.
+
 **Also** — themes (presets, custom colours, font) and an editable thank-you screen;
 toasts, modals and confirmation before anything destructive.
 
-**Placeholders ("Coming soon")** — logic jumps (Workflow tab), integrations (Connect
-tab), team collaboration (Invite), payment and file-upload question types.
+**Placeholders ("Coming soon")** — advanced branching (several conditions,
+calculations), integrations (Connect tab), team collaboration (Invite), payment and
+file-upload question types.
 
 ## Running it locally
 
@@ -85,12 +90,12 @@ instant feedback.
 backend/app/
   main.py            app, CORS, startup (create tables, seed), router registration
   database.py        engine, session, get_db dependency
-  models.py          the seven tables
+  models.py          the eight tables
   schemas.py         request and response shapes (Pydantic)
   auth.py            get_current_creator: the single place that decides who is calling
   presenters.py      database rows -> response shapes
-  routers/           forms.py, questions.py, responses.py, public.py
-  services/          snapshot.py (draft vs published), validation.py, stats.py
+  routers/           forms.py, questions.py, logic_jumps.py, responses.py, public.py
+  services/          snapshot.py (draft vs published), validation.py, logic.py, stats.py
   seed.py            sample data
 backend/tests/       test_validation.py, test_api.py
 
@@ -102,7 +107,7 @@ frontend/src/
   components/respondent/ the one-question-at-a-time flow
   components/results/    summary and responses
   question-types/        one answer control per kind of question
-  lib/                   api.ts (every HTTP call), types.ts, validation.ts, question-types.ts
+  lib/                   api.ts (every HTTP call), types.ts, validation.ts, logic.ts, question-types.ts
 ```
 
 Two design points worth knowing:
@@ -119,6 +124,7 @@ Two design points worth knowing:
 
 ```
 creators ──< forms ──< questions ──< question_choices
+               │           ├──< logic_jumps (rule on a question; points at a target question)
                │           │                │
                │           └──< answers >───┼── (question an answer belongs to)
                └──< responses ──< answers ──< answer_choices >── question_choices
@@ -130,6 +136,7 @@ creators ──< forms ──< questions ──< question_choices
 | `forms` | id, creator_id → creators, public_id (unique), title, status, published_snapshot (JSON), published_at, theme_background_color, theme_question_color, theme_answer_color, theme_button_color, theme_button_text_color, theme_font, thank_you_title, thank_you_text, created_at, updated_at | A form. Its `questions` rows are the draft; `published_snapshot` is the live copy. |
 | `questions` | id, form_id → forms, type, title, description, is_required, position, allow_multiple, rating_max, deleted_at | One question; `position` is its order. |
 | `question_choices` | id, question_id → questions, label, position, deleted_at | Options of multiple-choice and dropdown questions. |
+| `logic_jumps` | id, question_id → questions, position, operator, compare_choice_id → question_choices, compare_number, compare_boolean, target_question_id → questions | One rule: "if the answer `operator` `compare value`, go to `target`". An empty target means the end of the form. |
 | `responses` | id, form_id → forms, token (unique), started_at, submitted_at | One person's pass through a form. Created on start; `submitted_at` empty means abandoned. |
 | `answers` | id, response_id → responses, question_id → questions, value_text, value_number, value_boolean; unique (response_id, question_id) | One answered question. |
 | `answer_choices` | answer_id → answers, choice_id → question_choices (composite primary key) | Which choices were picked. |
@@ -142,6 +149,9 @@ Why it is shaped this way:
   and a "No" is a real `false`.
 - **A join table for picked choices**: one answer can have many choices and one choice
   appears in many answers.
+- **Logic rules are rows, with typed compare values and real foreign keys**, so deleting
+  a question or choice removes the rules that mention it. Jumps may only go forward,
+  which makes loops impossible.
 - **`public_id` and `token` are random strings**, so public links and in-progress
   responses cannot be guessed by counting.
 - **`deleted_at` (soft delete)** on questions and choices: something deleted from the
@@ -172,6 +182,9 @@ Creator routes:
 | POST | `/api/questions/{id}/choices` | Add a choice |
 | PATCH | `/api/choices/{id}` | Rename a choice |
 | DELETE | `/api/choices/{id}` | Remove a choice |
+| POST | `/api/questions/{id}/logic-jumps` | Add a logic jump |
+| PUT | `/api/logic-jumps/{id}` | Replace a logic jump |
+| DELETE | `/api/logic-jumps/{id}` | Remove a logic jump |
 | GET | `/api/forms/{id}/responses` | Responses table |
 | GET | `/api/forms/{id}/responses.csv` | The same as a CSV download |
 | GET | `/api/forms/{id}/summary` | Per-question statistics and completion rate |
@@ -204,22 +217,31 @@ of a question that already has answers.
   dropdown is always single-select.
 - **Number questions** accept any finite number (Typeform's accept only whole numbers).
 - **Rating** is stars, 3 to 10, default 5.
+- **Logic jumps** have one condition each, are checked top to bottom (first match
+  wins), and can only jump forward or to the end. A question skipped by a jump is not
+  required and any answer sent for it is discarded.
 - **Mobile:** the public form is responsive; the builder is designed for desktop widths.
 - **Branding:** the layout and interaction patterns follow Typeform, but the name and
   mark are our own; no Typeform logos or assets are used.
 
 ## Deploying
 
-Backend (on any machine with Docker):
+**Backend.** It needs Python 3.12 and a disk that persists. The live demo runs it as a
+systemd user service:
 
 ```bash
-cd backend
-cp .env.example .env      # set API_PORT and ALLOWED_ORIGINS
-docker compose up -d --build
+git clone https://github.com/anoushkawasthi/typeform-builder-assignment-scaler.git
+cd typeform-builder-assignment-scaler/backend
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+
+DATABASE_URL=sqlite:////absolute/path/to/app.db \
+ALLOWED_ORIGINS=https://forms.ikyano.tech \
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8017
 ```
 
-The API listens on `127.0.0.1:$API_PORT`; put a reverse proxy or tunnel in front of it.
-The SQLite file is kept in the `sqlite-data` Docker volume.
+It listens on localhost only; a Cloudflare Tunnel maps `forms-api.ikyano.tech` to it.
+With Docker instead: `cp .env.example .env && docker compose up -d --build` (the SQLite
+file then lives in the `sqlite-data` volume).
 
-Frontend (Vercel): import the repository, set the root directory to `frontend`, and set
-`NEXT_PUBLIC_API_URL` to the backend's public address.
+**Frontend (Vercel).** Import the repository, set the root directory to `frontend`, and
+set `NEXT_PUBLIC_API_URL` to the backend's public address.

@@ -19,8 +19,8 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_or_create_default_creator
 from app.database import Base, SessionLocal, engine
-from app.models import Answer, AnswerChoice, Creator, Form, Question, QuestionChoice, Response, utc_now
-from app.services import snapshot
+from app.models import Answer, AnswerChoice, Creator, Form, LogicJump, Question, QuestionChoice, Response, utc_now
+from app.services import logic, snapshot
 
 # Fixed public ids so the demo links in the README keep working after a re-seed.
 FEEDBACK_FORM_PUBLIC_ID = "demoFdbk"
@@ -173,6 +173,8 @@ def add_fake_responses(db: Session, form: Form, submitted: int, abandoned: int, 
     spread over the last two weeks.
     """
     now = utc_now()
+    published_questions = form.published_snapshot["questions"]
+    question_by_id = {question.id: question for question in form.questions}
 
     for _ in range(submitted):
         started_at = now - timedelta(days=rng.randint(0, 13), hours=rng.randint(0, 23), minutes=rng.randint(0, 59))
@@ -183,10 +185,23 @@ def add_fake_responses(db: Session, form: Form, submitted: int, abandoned: int, 
             submitted_at=started_at + timedelta(seconds=rng.randint(40, 300)),
         )
         person_name = rng.choice(FIRST_NAMES)
-        for question in form.questions:
+
+        # Walk the form the way a real respondent would, following logic jumps, so the
+        # sample data never contains an answer to a question that was skipped.
+        current_index = 0
+        while current_index != logic.END_OF_FORM:
+            question = question_by_id[published_questions[current_index]["id"]]
             answer = make_fake_answer(question, rng, person_name)
+
+            number = None
+            boolean = None
+            choice_ids: list[int] = []
             if answer is not None:
                 response.answers.append(answer)
+                number = answer.value_number
+                boolean = answer.value_boolean
+                choice_ids = [selected.choice_id for selected in answer.selected_choices]
+            current_index = logic.next_question_index(published_questions, current_index, number, boolean, choice_ids)
         db.add(response)
 
     for _ in range(abandoned):
@@ -207,6 +222,15 @@ def seed(db: Session) -> None:
     db.add_all([feedback_form, event_form, draft_form])
     # flush() sends the INSERTs so every question and choice gets its id, which the
     # snapshot and the fake answers need. Nothing is final until commit().
+    db.flush()
+
+    # One logic jump for the demo: people who are not coming in person skip the two
+    # questions about the day itself (favourite session, number of guests).
+    joining_in_person = event_form.questions[2]
+    company = event_form.questions[5]
+    joining_in_person.logic_jumps.append(
+        LogicJump(operator="is", compare_boolean=False, target_question_id=company.id)
+    )
     db.flush()
 
     snapshot.publish_form(db, feedback_form)

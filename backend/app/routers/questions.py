@@ -101,6 +101,9 @@ def update_question(
                 "Delete it and add a new question instead.",
             )
         question.type = new_type
+        # Rules are written for a particular type ("is choice B", "greater than 3").
+        # They would be meaningless on the new type, so they are removed.
+        question.logic_jumps.clear()
         becomes_choice_type = new_type in ("multiple_choice", "dropdown")
         if becomes_choice_type and len(snapshot.active_choices(question)) == 0:
             question.choices.append(QuestionChoice(label="", position=0))

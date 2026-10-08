@@ -72,6 +72,7 @@ def present_question(question: Question, answer_count: int) -> schemas.QuestionO
         allow_multiple=question.allow_multiple,
         rating_max=question.rating_max,
         choices=choices,
+        logic_jumps=snapshot.active_logic_jumps(question),
         answer_count=answer_count,
     )
 

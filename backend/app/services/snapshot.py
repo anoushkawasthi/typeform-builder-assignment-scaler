@@ -51,6 +51,31 @@ def active_choices(question: Question) -> list[QuestionChoice]:
     return [choice for choice in question.choices if choice.deleted_at is None]
 
 
+def active_logic_jumps(question: Question) -> list[dict]:
+    """
+    A question's rules as plain dictionaries, leaving out any rule that points at
+    something the creator has deleted from the draft (a soft-deleted target question or
+    choice). Such a rule could never apply, so it is hidden rather than shown broken.
+    """
+    rules = []
+    for jump in question.logic_jumps:
+        if jump.target_question is not None and jump.target_question.deleted_at is not None:
+            continue
+        if jump.compare_choice is not None and jump.compare_choice.deleted_at is not None:
+            continue
+        rules.append(
+            {
+                "id": jump.id,
+                "operator": jump.operator,
+                "compare_choice_id": jump.compare_choice_id,
+                "compare_number": jump.compare_number,
+                "compare_boolean": jump.compare_boolean,
+                "target_question_id": jump.target_question_id,
+            }
+        )
+    return rules
+
+
 def build_snapshot(form: Form) -> dict:
     """Copy everything a respondent needs out of the draft into a plain dictionary."""
     question_dicts = []
@@ -68,6 +93,7 @@ def build_snapshot(form: Form) -> dict:
                 "allow_multiple": question.allow_multiple,
                 "rating_max": question.rating_max,
                 "choices": choice_dicts,
+                "logic_jumps": active_logic_jumps(question),
             }
         )
 

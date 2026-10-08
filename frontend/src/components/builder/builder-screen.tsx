@@ -198,7 +198,11 @@ export function BuilderScreen({ formId }: { formId: number }) {
         ) : (
           <QuestionSettings
             question={selectedQuestion}
+            allQuestions={questions}
             onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
+            onAddLogicJump={(rule) => editor.addLogicJump(selectedQuestion.id, rule)}
+            onReplaceLogicJump={editor.replaceLogicJump}
+            onDeleteLogicJump={editor.deleteLogicJump}
           />
         )}
       </div>

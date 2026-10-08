@@ -7,7 +7,8 @@
  *                 time with the slide-and-fade transition, handles the keyboard,
  *                 validates before moving on, and submits at the end.
  * Depends on:     question-screen.tsx, form-theme.tsx, thank-you-screen.tsx,
- *                 progress-bar.tsx, flow-footer.tsx, lib/validation.ts, motion.
+ *                 progress-bar.tsx, flow-footer.tsx, lib/validation.ts, lib/logic.ts,
+ *                 motion.
  * Depended on by: public-form-screen.tsx (the real form) and
  *                 components/builder/preview-screen.tsx (the builder's preview).
  *
@@ -19,6 +20,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { AnswerError, AnswerMap, AnswerPayload, AnswerValue, FillableForm } from "@/lib/types";
+import { nextQuestionIndex, visitedIndexes } from "@/lib/logic";
 import { isAnswerEmpty, toAnswerPayloads, validateAnswer } from "@/lib/validation";
 
 import { FlowFooter } from "./flow-footer";
@@ -124,10 +126,12 @@ export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
       setError(message);
       return;
     }
-    if (currentIndex === questions.length - 1) {
+    // Usually the next question; a logic jump may send us further ahead or to the end.
+    const nextIndex = nextQuestionIndex(questions, currentIndex, answersRef.current[question.id]);
+    if (nextIndex >= questions.length) {
       void submit();
     } else {
-      goToIndex(currentIndex + 1, 1);
+      goToIndex(nextIndex, 1);
     }
     // `submit` and `goToIndex` only use state setters and refs, which never change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -137,8 +141,12 @@ export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
     if (isFinished || isSubmitting || currentIndex === 0) {
       return;
     }
-    goToIndex(currentIndex - 1, -1);
-  }, [currentIndex, isFinished, isSubmitting]);
+    // Go back along the path actually taken, so a question that a logic jump skipped
+    // on the way here is skipped on the way back too.
+    const pathSoFar = visitedIndexes(questions, answersRef.current, currentIndex);
+    const previousIndex = pathSoFar.length > 0 ? pathSoFar[pathSoFar.length - 1] : currentIndex - 1;
+    goToIndex(previousIndex, -1);
+  }, [currentIndex, isFinished, isSubmitting, questions]);
 
   // Keyboard navigation for the whole form. Letter and number shortcuts for choices and
   // ratings live in their own components; this handles Enter and the arrow keys.
@@ -250,7 +258,11 @@ export function FormFlow({ form, onStart, onSubmit }: FormFlowProps) {
                   isActive={true}
                   isInteractive={true}
                   error={error}
-                  isLastQuestion={currentIndex === questions.length - 1}
+                  // "Submit" appears whenever answering this question would end the
+                  // form, which with logic jumps is not only on the final question.
+                  isLastQuestion={
+                    nextQuestionIndex(questions, currentIndex, answers[questions[currentIndex].id]) >= questions.length
+                  }
                   isSubmitting={isSubmitting}
                 />
               )}

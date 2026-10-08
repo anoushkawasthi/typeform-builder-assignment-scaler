@@ -195,3 +195,100 @@ def test_csv_export_has_a_header_and_one_row_per_response(client, published_form
     assert len(lines) == 2
     assert lines[0].startswith("Response ID,Started at (UTC),Submitted at (UTC)")
     assert "Ann" in lines[1] and "ann@example.com" in lines[1] and "Green" in lines[1]
+
+
+def make_branching_form(client):
+    """
+    Q1 yes/no -> if "No", jump to Q3 (skipping Q2).  Q2 is required.  Q3 short text.
+    Returns (form_id, public form JSON).
+    """
+    form = client.post("/api/forms", json={"title": "Branching"}).json()
+    form_id = form["id"]
+    client.post(f"/api/forms/{form_id}/questions", json={"type": "yes_no"})
+    client.post(f"/api/forms/{form_id}/questions", json={"type": "short_text"})
+    form = client.post(f"/api/forms/{form_id}/questions", json={"type": "short_text"}).json()
+    first, second, third = form["questions"]
+    client.patch(f"/api/questions/{second['id']}", json={"is_required": True})
+
+    created = client.post(
+        f"/api/questions/{first['id']}/logic-jumps",
+        json={"operator": "is", "compare_boolean": False, "target_question_id": third["id"]},
+    )
+    assert created.status_code == 201
+    assert len(created.json()["questions"][0]["logic_jumps"]) == 1
+
+    client.post(f"/api/forms/{form_id}/publish")
+    return form_id, client.get(f"/api/public/forms/{form['public_id']}").json()
+
+
+def test_logic_jump_skips_a_required_question(client):
+    form_id, public_form = make_branching_form(client)
+    first, second, third = public_form["questions"]
+    assert first["logic_jumps"][0]["target_question_id"] == third["id"]
+
+    # "No" jumps past the required Q2, so leaving Q2 out is fine...
+    _, response = submit(client, public_form, [{"question_id": first["id"], "boolean": False}])
+    assert response.status_code == 201
+
+    # ...but "Yes" goes through Q2, which is then demanded.
+    _, response = submit(client, public_form, [{"question_id": first["id"], "boolean": True}])
+    assert response.status_code == 422
+    assert [error["question_id"] for error in response.json()["errors"]] == [second["id"]]
+
+
+def test_answers_to_skipped_questions_are_not_stored(client):
+    form_id, public_form = make_branching_form(client)
+    first, second, third = public_form["questions"]
+    answers = [
+        {"question_id": first["id"], "boolean": False},
+        {"question_id": second["id"], "text": "should be ignored"},
+        {"question_id": third["id"], "text": "kept"},
+    ]
+    _, response = submit(client, public_form, answers)
+    assert response.status_code == 201
+
+    table = client.get(f"/api/forms/{form_id}/responses").json()
+    stored_question_ids = [answer["question_id"] for answer in table["responses"][0]["answers"]]
+    assert stored_question_ids == [first["id"], third["id"]]
+
+
+def test_logic_jump_rules_are_checked(client):
+    form = client.post("/api/forms", json={"title": "Rules"}).json()
+    client.post(f"/api/forms/{form['id']}/questions", json={"type": "short_text"})
+    form = client.post(f"/api/forms/{form['id']}/questions", json={"type": "rating"}).json()
+    text_question, rating_question = form["questions"]
+
+    # A text question cannot be compared with a number.
+    wrong_operator = client.post(
+        f"/api/questions/{text_question['id']}/logic-jumps",
+        json={"operator": "greater_than", "compare_number": 3},
+    )
+    assert wrong_operator.status_code == 400
+
+    # A jump may not go backwards.
+    backwards = client.post(
+        f"/api/questions/{rating_question['id']}/logic-jumps",
+        json={"operator": "always", "target_question_id": text_question["id"]},
+    )
+    assert backwards.status_code == 400
+
+    # A valid rule can be replaced and deleted.
+    created = client.post(
+        f"/api/questions/{rating_question['id']}/logic-jumps",
+        json={"operator": "less_than", "compare_number": 3},
+    ).json()
+    rule = created["questions"][1]["logic_jumps"][0]
+    assert rule["target_question_id"] is None
+
+    replaced = client.put(f"/api/logic-jumps/{rule['id']}", json={"operator": "is", "compare_number": 5}).json()
+    assert replaced["questions"][1]["logic_jumps"][0]["operator"] == "is"
+
+    deleted = client.delete(f"/api/logic-jumps/{rule['id']}").json()
+    assert deleted["questions"][1]["logic_jumps"] == []
+
+
+def test_duplicate_copies_logic_jumps_onto_the_new_questions(client):
+    form_id, _ = make_branching_form(client)
+    copy = client.post(f"/api/forms/{form_id}/duplicate").json()
+    first, _, third = copy["questions"]
+    assert first["logic_jumps"][0]["target_question_id"] == third["id"]

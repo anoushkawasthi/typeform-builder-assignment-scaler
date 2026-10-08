@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * placeholder-section-screen.tsx — the Workflow and Connect tabs.
+ * placeholder-section-screen.tsx — the Connect tab.
  *
  * What it does:   shows the normal form header with a "Coming soon" panel underneath.
- *                 The brief lists logic jumps and integrations as placeholder features.
+ *                 The brief lists integrations and webhooks as a placeholder feature.
  * Depends on:     use-form-editor.ts, ui/form-header.tsx, ui/coming-soon.tsx.
- * Depended on by: app/forms/[id]/workflow/page.tsx, app/forms/[id]/connect/page.tsx.
+ * Depended on by: app/forms/[id]/connect/page.tsx.
  */
 
-import { GitBranch, Plug } from "lucide-react";
+import { Plug } from "lucide-react";
 
 import { ComingSoonPanel } from "@/components/ui/coming-soon";
 import { FormHeader } from "@/components/ui/form-header";
@@ -17,11 +17,6 @@ import { FormHeader } from "@/components/ui/form-header";
 import { useFormEditor } from "./use-form-editor";
 
 const SECTION_CONTENT = {
-  workflow: {
-    icon: GitBranch,
-    title: "Logic jumps and branching",
-    text: "Send respondents to different questions depending on their answers.",
-  },
   connect: {
     icon: Plug,
     title: "Integrations and webhooks",
@@ -31,7 +26,7 @@ const SECTION_CONTENT = {
 
 interface PlaceholderSectionScreenProps {
   formId: number;
-  section: "workflow" | "connect";
+  section: "connect";
 }
 
 export function PlaceholderSectionScreen({ formId, section }: PlaceholderSectionScreenProps) {

@@ -5,29 +5,42 @@
  *
  * What it does:   the question-type picker, the Required toggle, the settings that
  *                 only some types have (multiple selection, number of stars), and the
- *                 Logic placeholder.
- * Depends on:     ui/toggle.tsx, ui/menu.tsx, ui/question-type-chip.tsx,
- *                 ui/coming-soon.tsx, lib/question-types.ts.
+ *                 logic jumps.
+ * Depends on:     logic-editor.tsx, ui/toggle.tsx, ui/menu.tsx,
+ *                 ui/question-type-chip.tsx, lib/question-types.ts.
  * Depended on by: builder-screen.tsx.
  */
 
 import { ChevronDown } from "lucide-react";
 
-import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { QuestionTypeIcon } from "@/components/ui/question-type-chip";
 import { Toggle } from "@/components/ui/toggle";
 import { QUESTION_TYPES } from "@/lib/question-types";
-import type { Question, QuestionType, QuestionUpdate } from "@/lib/types";
+import type { LogicJumpInput, Question, QuestionType, QuestionUpdate } from "@/lib/types";
+
+import { LogicEditor } from "./logic-editor";
 
 interface QuestionSettingsProps {
   question: Question;
+  /** Every question of the form, in order; the logic editor needs them for "go to". */
+  allQuestions: Question[];
   onUpdate: (changes: QuestionUpdate) => void;
+  onAddLogicJump: (rule: LogicJumpInput) => void;
+  onReplaceLogicJump: (logicJumpId: number, rule: LogicJumpInput) => void;
+  onDeleteLogicJump: (logicJumpId: number) => void;
 }
 
 const RATING_STEP_OPTIONS = [3, 4, 5, 6, 7, 8, 9, 10];
 
-export function QuestionSettings({ question, onUpdate }: QuestionSettingsProps) {
+export function QuestionSettings({
+  question,
+  allQuestions,
+  onUpdate,
+  onAddLogicJump,
+  onReplaceLogicJump,
+  onDeleteLogicJump,
+}: QuestionSettingsProps) {
   // The server refuses to change the type of a question that has answers (they are
   // stored per type), so the picker is locked up front with an explanation.
   const isTypeLocked = question.answer_count > 0;
@@ -64,6 +77,9 @@ export function QuestionSettings({ question, onUpdate }: QuestionSettingsProps) 
             This question already has answers, so its type can&apos;t be changed.
           </p>
         )}
+        {!isTypeLocked && question.logic_jumps.length > 0 && (
+          <p className="mt-2 text-[12px] leading-4 text-admin-muted">Changing the type removes this question&apos;s logic.</p>
+        )}
 
         <div className="mt-3 border-t border-admin-border-soft pt-2">
           <Toggle
@@ -99,10 +115,13 @@ export function QuestionSettings({ question, onUpdate }: QuestionSettingsProps) 
         </div>
       </section>
 
-      <section className="flex h-12 shrink-0 items-center justify-between rounded-xl bg-admin-panel px-4">
-        <h2 className="font-medium text-admin-text">Logic</h2>
-        <ComingSoonBadge />
-      </section>
+      <LogicEditor
+        question={question}
+        allQuestions={allQuestions}
+        onAdd={onAddLogicJump}
+        onReplace={onReplaceLogicJump}
+        onDelete={onDeleteLogicJump}
+      />
     </aside>
   );
 }

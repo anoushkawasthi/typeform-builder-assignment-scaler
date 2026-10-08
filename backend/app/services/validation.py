@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 from email_validator import EmailNotValidError, validate_email
 
 from app.schemas import AnswerIn
+from app.services import logic
 
 MAX_SHORT_TEXT_LENGTH = 1000
 MAX_LONG_TEXT_LENGTH = 20000
@@ -168,8 +169,12 @@ def validate_submission(questions: list[dict], answers: list[AnswerIn]) -> tuple
     """
     Check a whole submission.
 
-    Why we loop over the QUESTIONS and not over the submitted answers: a required
-    question that the request simply left out must still produce an error.
+    Why we walk the QUESTIONS and not the submitted answers: a required question that
+    the request simply left out must still produce an error.
+
+    Why we walk them along the logic-jump path: a question the respondent was jumped
+    past was never shown, so it must not be demanded even if it is required, and any
+    answer sent for it is ignored rather than stored.
     """
     errors: list[AnswerError] = []
     clean_answers: list[CleanAnswer] = []
@@ -185,12 +190,26 @@ def validate_submission(questions: list[dict], answers: list[AnswerIn]) -> tuple
             continue
         answers_by_question_id[answer.question_id] = answer
 
-    for question in questions:
+    current_index = 0 if len(questions) > 0 else logic.END_OF_FORM
+    while current_index != logic.END_OF_FORM:
+        question = questions[current_index]
         answer = answers_by_question_id.get(question["id"])
         clean_answer, error_message = validate_answer(question, answer)
+
         if error_message is not None:
             errors.append(AnswerError(question["id"], error_message))
         elif clean_answer is not None:
             clean_answers.append(clean_answer)
+
+        # Decide where to go next from the validated answer. An invalid or missing
+        # answer matches no rule (except "always"), so the walk just carries on.
+        number = None
+        boolean = None
+        choice_ids: list[int] = []
+        if clean_answer is not None:
+            number = clean_answer.number
+            boolean = clean_answer.boolean
+            choice_ids = clean_answer.choice_ids
+        current_index = logic.next_question_index(questions, current_index, number, boolean, choice_ids)
 
     return clean_answers, errors

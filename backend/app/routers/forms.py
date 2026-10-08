@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 from app import presenters, schemas
 from app.auth import get_current_creator
 from app.database import get_db
-from app.models import Creator, Form, Question, QuestionChoice
+from app.models import Creator, Form, LogicJump, Question, QuestionChoice
 from app.services import snapshot
 
 router = APIRouter(prefix="/api/forms", tags=["forms"])
@@ -134,6 +134,11 @@ def duplicate_form(form_id: int, db: Session = Depends(get_db), creator: Creator
         thank_you_text=original.thank_you_text,
     )
 
+    # Copies get new ids, so while copying we remember which new row came from which
+    # old one. Logic jumps refer to questions and choices by id and need translating.
+    question_copy_by_old_id: dict[int, Question] = {}
+    choice_copy_by_old_id: dict[int, QuestionChoice] = {}
+
     for position, question in enumerate(snapshot.active_questions(original)):
         question_copy = Question(
             type=question.type,
@@ -145,10 +150,35 @@ def duplicate_form(form_id: int, db: Session = Depends(get_db), creator: Creator
             rating_max=question.rating_max,
         )
         for choice_position, choice in enumerate(snapshot.active_choices(question)):
-            question_copy.choices.append(QuestionChoice(label=choice.label, position=choice_position))
+            choice_copy = QuestionChoice(label=choice.label, position=choice_position)
+            question_copy.choices.append(choice_copy)
+            choice_copy_by_old_id[choice.id] = choice_copy
         copy.questions.append(question_copy)
+        question_copy_by_old_id[question.id] = question_copy
 
     db.add(copy)
+    # flush() makes the database assign ids to the copies, which the rules below need.
+    db.flush()
+
+    for question in snapshot.active_questions(original):
+        for position, rule in enumerate(snapshot.active_logic_jumps(question)):
+            target_id = None
+            if rule["target_question_id"] is not None:
+                target_id = question_copy_by_old_id[rule["target_question_id"]].id
+            compare_choice_id = None
+            if rule["compare_choice_id"] is not None:
+                compare_choice_id = choice_copy_by_old_id[rule["compare_choice_id"]].id
+            question_copy_by_old_id[question.id].logic_jumps.append(
+                LogicJump(
+                    position=position,
+                    operator=rule["operator"],
+                    compare_choice_id=compare_choice_id,
+                    compare_number=rule["compare_number"],
+                    compare_boolean=rule["compare_boolean"],
+                    target_question_id=target_id,
+                )
+            )
+
     db.commit()
     return presenters.present_form_detail(db, copy)
 

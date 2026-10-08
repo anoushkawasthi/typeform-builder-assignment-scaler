@@ -1,7 +1,7 @@
 """
 models.py — the database tables, written as SQLAlchemy classes.
 
-What it does:   defines the seven tables and how they relate to each other.
+What it does:   defines the eight tables and how they relate to each other.
 Depends on:     database.py (for `Base`).
 Depended on by: every router and service, and seed.py.
 
@@ -11,6 +11,8 @@ The relationships, read top to bottom:
                     │             │                 │
                     │             *                 *
                     └──* responses 1──* answers 1──* answer_choices
+
+(Plus logic_jumps, which hangs off questions: "after this question, go to that one".)
 
 A form belongs to a creator and has ordered questions. Choice-type questions have ordered
 choices. Each time a person fills a form we store one response; each question they
@@ -40,6 +42,9 @@ QUESTION_TYPES = [
 
 # Types whose answer is one or more rows in question_choices.
 CHOICE_QUESTION_TYPES = ["multiple_choice", "dropdown"]
+
+# Comparisons a logic jump can make. "always" ignores the answer.
+LOGIC_OPERATORS = ["always", "is", "is_not", "less_than", "greater_than"]
 
 FORM_STATUS_DRAFT = "draft"
 FORM_STATUS_PUBLISHED = "published"
@@ -156,6 +161,50 @@ class Question(Base):
         back_populates="question", cascade="all, delete-orphan", order_by="QuestionChoice.position"
     )
     answers: Mapped[list["Answer"]] = relationship(back_populates="question", cascade="all, delete-orphan")
+    # `foreign_keys` is needed because logic_jumps points at questions twice (the
+    # question the rule belongs to, and the question it jumps to).
+    logic_jumps: Mapped[list["LogicJump"]] = relationship(
+        back_populates="question",
+        cascade="all, delete-orphan",
+        order_by="LogicJump.position",
+        foreign_keys="LogicJump.question_id",
+    )
+
+
+class LogicJump(Base):
+    """
+    One rule on a question: "if the answer <operator> <value>, go to <target>".
+
+    Rules are checked in `position` order after the question is answered; the first one
+    that matches decides where the respondent goes. If none matches, the form simply
+    continues with the next question.
+
+    The value to compare with is typed like an answer: a choice (multiple choice,
+    dropdown), a boolean (yes/no) or a number (number, rating). Only one is filled in.
+    `target_question_id` empty means "jump to the end of the form".
+    """
+
+    __tablename__ = "logic_jumps"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id", ondelete="CASCADE"), index=True)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+    operator: Mapped[str] = mapped_column(String(20), default="always")
+    compare_choice_id: Mapped[int | None] = mapped_column(
+        ForeignKey("question_choices.id", ondelete="CASCADE"), nullable=True
+    )
+    compare_number: Mapped[float | None] = mapped_column(Float, nullable=True)
+    compare_boolean: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    # ON DELETE CASCADE: if the target question is deleted, the rule goes with it.
+    target_question_id: Mapped[int | None] = mapped_column(
+        ForeignKey("questions.id", ondelete="CASCADE"), nullable=True
+    )
+
+    question: Mapped["Question"] = relationship(back_populates="logic_jumps", foreign_keys=[question_id])
+    target_question: Mapped["Question | None"] = relationship(foreign_keys=[target_question_id])
+    compare_choice: Mapped["QuestionChoice | None"] = relationship()
 
 
 class QuestionChoice(Base):

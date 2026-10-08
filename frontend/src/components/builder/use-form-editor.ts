@@ -19,7 +19,7 @@ import { useIsMutating, useMutation, useQuery, useQueryClient } from "@tanstack/
 import { toast } from "sonner";
 
 import * as api from "@/lib/api";
-import type { FormDetail, FormUpdate, QuestionType, QuestionUpdate } from "@/lib/types";
+import type { FormDetail, FormUpdate, LogicJumpInput, QuestionType, QuestionUpdate } from "@/lib/types";
 
 /** The cache key under which a form is stored. Shared by every screen that shows it. */
 export function formQueryKey(formId: number) {
@@ -89,6 +89,20 @@ export function useFormEditor(formId: number) {
     ...saveOptions,
     mutationFn: (choiceId: number) => api.deleteChoice(choiceId),
   });
+  const addLogicJumpMutation = useMutation({
+    ...saveOptions,
+    mutationFn: (variables: { questionId: number; rule: LogicJumpInput }) =>
+      api.createLogicJump(variables.questionId, variables.rule),
+  });
+  const replaceLogicJumpMutation = useMutation({
+    ...saveOptions,
+    mutationFn: (variables: { logicJumpId: number; rule: LogicJumpInput }) =>
+      api.replaceLogicJump(variables.logicJumpId, variables.rule),
+  });
+  const deleteLogicJumpMutation = useMutation({
+    ...saveOptions,
+    mutationFn: (logicJumpId: number) => api.deleteLogicJump(logicJumpId),
+  });
   const reorderMutation = useMutation({
     ...saveOptions,
     mutationFn: (questionIds: number[]) => api.reorderQuestions(formId, questionIds),
@@ -134,6 +148,10 @@ export function useFormEditor(formId: number) {
     addChoice: (questionId: number) => addChoiceMutation.mutate(questionId),
     renameChoice: (choiceId: number, label: string) => renameChoiceMutation.mutate({ choiceId, label }),
     deleteChoice: (choiceId: number) => deleteChoiceMutation.mutate(choiceId),
+    addLogicJump: (questionId: number, rule: LogicJumpInput) => addLogicJumpMutation.mutate({ questionId, rule }),
+    replaceLogicJump: (logicJumpId: number, rule: LogicJumpInput) =>
+      replaceLogicJumpMutation.mutate({ logicJumpId, rule }),
+    deleteLogicJump: (logicJumpId: number) => deleteLogicJumpMutation.mutate(logicJumpId),
     reorderQuestions,
     publish: () => publishMutation.mutateAsync(),
     unpublish: () => unpublishMutation.mutateAsync(),
