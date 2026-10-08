@@ -251,6 +251,13 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
     }
   }
 
+  // True whenever answering the current question would end the form, which with logic
+  // jumps is not only on the final question. It turns OK into Submit and switches off
+  // the footer's "next" arrow.
+  const isOnQuestion = !isFinished && !isOnWelcome && questions.length > 0;
+  const isLastQuestion =
+    isOnQuestion && nextQuestionIndex(questions, currentIndex, answers[questions[currentIndex].id]) >= questions.length;
+
   const slideDistance = prefersReducedMotion ? "0%" : SLIDE_DISTANCE;
   const slideVariants = {
     // `slideDirection` is the value passed as `custom` below.
@@ -295,7 +302,9 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
               y: { duration: SLIDE_SECONDS, ease: SLIDE_EASING },
               opacity: { duration: FADE_SECONDS, ease: "easeOut" },
             }}
-            className="col-start-1 row-start-1 flex w-full items-center justify-center self-center px-6 py-20 @2xl:px-20"
+            // Wide screens: Typeform pads the block 35px above and 88px below, so although
+            // it is centred it sits a little above the middle of the window.
+            className="col-start-1 row-start-1 flex w-full items-center justify-center self-center px-6 py-20 @2xl:px-20 @2xl:pb-[88px] @2xl:pt-[35px]"
           >
             <div className="w-full max-w-[720px]">
               {isFinished ? (
@@ -312,11 +321,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
                   isActive={true}
                   isInteractive={true}
                   error={error}
-                  // "Submit" appears whenever answering this question would end the
-                  // form, which with logic jumps is not only on the final question.
-                  isLastQuestion={
-                    nextQuestionIndex(questions, currentIndex, answers[questions[currentIndex].id]) >= questions.length
-                  }
+                  isLastQuestion={isLastQuestion}
                   isSubmitting={isSubmitting}
                 />
               )}
@@ -328,9 +333,10 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
       <FlowFooter
         showNavigation={!isFinished && !isOnWelcome}
         canGoBack={currentIndex > 0}
+        canGoForward={!isLastQuestion}
         isFinished={isFinished}
         onPrevious={goBack}
-        onNext={advance}
+        onNext={goForward}
       />
     </FormTheme>
   );

@@ -134,7 +134,7 @@ export function ChoiceAnswer({
               tabIndex={isInteractive && isActive ? 0 : -1}
               onClick={() => pick(choice)}
               className={
-                "flex min-h-[44px] items-center gap-2 rounded-lg px-[10px] py-[6px] text-left font-form " +
+                "flex min-h-[44px] items-center gap-1 rounded-lg px-[10px] py-[6px] text-left font-form " +
                 "bg-form-answer-6 transition-[box-shadow,background-color] duration-200 ease-form " +
                 // The outline is a shadow ring: thin when idle, bold when selected.
                 (isSelected

@@ -75,24 +75,28 @@ export function QuestionScreen({
         {number}
       </span>
 
-      <h1
-        id={titleId}
-        className="text-[20px] font-normal leading-[28px] text-form-question @2xl:text-[26px] @2xl:leading-[34px]"
-      >
-        {titleContent ?? (
-          <>
-            {question.title === "" ? "..." : <FormattedText text={question.title} />}
-            {question.is_required && <span aria-label="required"> *</span>}
-          </>
-        )}
-      </h1>
+      {/* Title and description, 8px apart. The description is drawn even when it is
+          empty: it then has no height, but the 8px stays, which is how Typeform ends up
+          with the same space above the answer whether or not there is a description. */}
+      <div className="flex flex-col gap-2">
+        <h1
+          id={titleId}
+          className="text-[20px] font-normal leading-[28px] text-form-question @2xl:text-[26px] @2xl:leading-[34px] @2xl:tracking-[-0.5px]"
+        >
+          {titleContent ?? (
+            <>
+              {question.title === "" ? "..." : <FormattedText text={question.title} />}
+              {question.is_required && <span aria-label="required"> *</span>}
+            </>
+          )}
+        </h1>
 
-      {descriptionContent ??
-        (question.description !== "" && (
-          <p className="mt-2 whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 @2xl:text-[18px]">
+        {descriptionContent ?? (
+          <p className="whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 @2xl:text-[18px]">
             <FormattedText text={question.description} />
           </p>
-        ))}
+        )}
+      </div>
 
       <div className="mt-8" aria-labelledby={titleId}>
         {answerContent ?? (
@@ -126,8 +130,8 @@ export function QuestionScreen({
               disabled={!isInteractive || isSubmitting}
               tabIndex={isInteractive && isActive ? 0 : -1}
               className={
-                "inline-flex h-10 items-center rounded-lg bg-form-button px-[18px] text-[14px] font-semibold " +
-                "text-form-button-text transition-opacity duration-200 ease-form " +
+                "inline-flex h-10 items-center rounded-lg bg-form-button px-4 text-[18px] font-semibold leading-6 " +
+                "text-form-button-text-90 transition-opacity duration-200 ease-form " +
                 (isInteractive ? "hover:opacity-80 " : "cursor-default ") +
                 (isSubmitting ? "opacity-60" : "")
               }
@@ -145,6 +149,10 @@ export function QuestionScreen({
             <span className="ml-3 hidden align-middle text-[12px] text-form-answer @2xl:inline">
               press <strong className="font-semibold">Ctrl + Enter ↵</strong>
             </span>
+          )}
+          {/* Typeform prints this warning under every Submit button. */}
+          {error === null && isLastQuestion && (
+            <p className="mt-2 text-[14px] leading-[18px] text-form-answer-80">Never submit passwords!</p>
           )}
         </div>
       )}

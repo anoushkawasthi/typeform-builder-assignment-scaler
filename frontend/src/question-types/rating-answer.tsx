@@ -84,7 +84,7 @@ export function RatingAnswer({ question, value, onChange, isActive, isInteractiv
                 }
               />
             </svg>
-            <span className="mt-4 font-form text-[16px] leading-[24px] text-form-answer">{rating}</span>
+            <span className="mt-4 font-form text-[16px] leading-[22px] text-form-answer-80 @2xl:mt-6">{rating}</span>
           </button>
         );
       })}

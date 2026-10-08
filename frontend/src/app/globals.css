@@ -38,6 +38,9 @@
   --color-form-answer: var(--form-answer);
   --color-form-button: var(--form-button);
   --color-form-button-text: var(--form-button-text);
+  /* Text on the form's buttons: the button text colour softened one step towards the
+     button itself, as Typeform draws "OK" and "Submit". */
+  --color-form-button-text-90: color-mix(in srgb, var(--form-button-text) 90%, var(--form-button));
 
   /* ...and the lighter tints are mixed from the answer colour, so a custom theme
      gets matching tints for free. The number is the strength in percent. */

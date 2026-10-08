@@ -25,12 +25,15 @@ export function ProgressBar({ answered, total }: ProgressBarProps) {
       // whole window on the public page and the frame in the preview.
       className="absolute inset-x-0 top-0 z-10 px-[6px] py-1"
     >
-      <div className="h-[3px] overflow-hidden rounded-full bg-form-answer-40">
-        {/* Only the width changes; the 0.2s transition is what makes it glide. */}
+      {/* Two rounded pieces side by side: the dark "done" part and the grey "to do"
+          part, with a 4px gap between them once there is something done. */}
+      <div className="flex h-[3px]">
+        {/* Only the width changes; the 0.4s transition is what makes it glide. */}
         <div
-          className="h-full rounded-full bg-form-answer transition-[width] duration-200 ease-in-out"
-          style={{ width: `${percent}%` }}
+          className="h-full rounded-full bg-form-answer transition-[width,margin] duration-[400ms] ease-in-out"
+          style={{ width: `${percent}%`, marginRight: percent > 0 && percent < 100 ? 4 : 0 }}
         />
+        <div className="h-full flex-1 rounded-full bg-form-answer-40" />
       </div>
     </div>
   );

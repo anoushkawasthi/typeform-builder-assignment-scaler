@@ -44,12 +44,12 @@ export function LongTextAnswer({ value, onChange, isActive, isInteractive }: Que
         readOnly={!isInteractive}
         tabIndex={isInteractive && isActive ? 0 : -1}
         onChange={(event) => onChange({ text: event.target.value })}
-        className={`${UNDERLINED_FIELD_CLASSES} resize-none overflow-hidden`}
+        className={`${UNDERLINED_FIELD_CLASSES} resize-none overflow-hidden py-[6px]`}
       />
       {/* Enter moves to the next question (handled in form-flow.tsx), so the hint tells
           the respondent how to make a new line instead. */}
       <p className="mt-2 font-form text-[12px] leading-[16px] text-form-answer">
-        <strong className="font-semibold">Shift ⇧ + Enter ↵</strong> to make a line break
+        <strong>Shift ⇧</strong> + <strong>Enter ↵</strong> to make a line break
       </p>
     </div>
   );

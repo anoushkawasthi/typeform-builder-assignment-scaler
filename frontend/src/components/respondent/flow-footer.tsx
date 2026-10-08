@@ -14,6 +14,8 @@ interface FlowFooterProps {
   /** False on the thank-you screen, where there is nowhere left to go. */
   showNavigation: boolean;
   canGoBack: boolean;
+  /** False on the last question: there the way forward is the Submit button. */
+  canGoForward: boolean;
   /** True on the thank-you screen. */
   isFinished: boolean;
   onPrevious: () => void;
@@ -24,7 +26,7 @@ const ARROW_BUTTON_CLASSES =
   "flex h-8 w-8 items-center justify-center bg-form-button text-form-button-text " +
   "transition-opacity duration-200 ease-form hover:opacity-80 disabled:opacity-30 disabled:hover:opacity-30";
 
-export function FlowFooter({ showNavigation, canGoBack, isFinished, onPrevious, onNext }: FlowFooterProps) {
+export function FlowFooter({ showNavigation, canGoBack, canGoForward, isFinished, onPrevious, onNext }: FlowFooterProps) {
   // After submitting, Typeform swaps the floating controls for a grey bar across the
   // bottom with its tagline and a small button.
   if (isFinished) {
@@ -50,15 +52,17 @@ export function FlowFooter({ showNavigation, canGoBack, isFinished, onPrevious, 
             onClick={onPrevious}
             className={`${ARROW_BUTTON_CLASSES} rounded-[8px_2px_2px_8px]`}
           >
-            <ChevronUp aria-hidden="true" className="h-5 w-5" />
+            {/* Drawn large and thin so the arrow is 14px wide with a 2px line, as Typeform's is. */}
+            <ChevronUp aria-hidden="true" className="h-7 w-7" strokeWidth={1.7} />
           </button>
           <button
             type="button"
             aria-label="Next question"
+            disabled={!canGoForward}
             onClick={onNext}
             className={`${ARROW_BUTTON_CLASSES} rounded-[2px_8px_8px_2px]`}
           >
-            <ChevronDown aria-hidden="true" className="h-5 w-5" />
+            <ChevronDown aria-hidden="true" className="h-7 w-7" strokeWidth={1.7} />
           </button>
         </div>
       )}
