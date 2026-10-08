@@ -44,21 +44,28 @@ export function AddQuestionDialog({ isOpen, onClose, onPick }: AddQuestionDialog
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add form elements" widthClass="max-w-[760px]">
-      <div className="rounded-xl bg-white p-6">
-        <label className="mb-6 flex h-8 w-full max-w-[240px] items-center gap-2 rounded-lg border border-admin-border px-3">
-          <Search aria-hidden="true" className="h-4 w-4 text-admin-muted" />
-          <input
-            autoFocus
-            value={searchText}
-            onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Search form elements"
-            aria-label="Search form elements"
-            className="w-full bg-transparent outline-none placeholder:text-admin-muted"
-          />
-        </label>
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add form elements" widthClass="max-w-[960px]">
+      <div className="flex flex-col gap-8 rounded-xl bg-white p-8 sm:flex-row">
+        {/* Left column: search, as in Typeform's dialog. */}
+        <div className="shrink-0 sm:w-[208px]">
+          <label className="flex h-8 w-full items-center gap-2 rounded-lg border border-admin-border px-3">
+            <Search aria-hidden="true" className="h-4 w-4 text-admin-muted" />
+            <input
+              autoFocus
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search form elements"
+              aria-label="Search form elements"
+              className="w-full bg-transparent outline-none placeholder:text-admin-muted"
+            />
+          </label>
+          <p className="mt-6 px-2 text-[13px] leading-5 text-admin-muted">
+            Pick a question type to add it after the selected question.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3">
+        {/* Right: the question types in colour-coded groups. */}
+        <div className="grid flex-1 grid-cols-2 content-start gap-x-4 gap-y-8 lg:grid-cols-3">
           {QUESTION_TYPE_GROUPS.map((group) => {
             const visibleTypes = group.types.filter((type) => matchesSearch(QUESTION_TYPES[type].label));
             // "Other" also holds the two placeholder types the brief asks us to show.
@@ -83,7 +90,7 @@ export function AddQuestionDialog({ isOpen, onClose, onPick }: AddQuestionDialog
                     </li>
                   ))}
                   {placeholders.map((item) => (
-                    <li key={item.label} className="flex h-9 items-center gap-3 pl-2 pr-3 text-admin-muted opacity-60">
+                    <li key={item.label} className="flex h-9 items-center gap-3 pl-2 pr-1 text-admin-muted opacity-60">
                       <IconTile color={item.color} icon={item.icon} />
                       <span className="flex-1">{item.label}</span>
                       <ComingSoonBadge />

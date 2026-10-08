@@ -84,6 +84,8 @@ export interface FormListItem {
   status: FormStatus;
   response_count: number;
   question_count: number;
+  /** Submitted as a percentage of started; null when nobody has started. */
+  completion_rate: number | null;
   has_unpublished_changes: boolean;
   created_at: string;
   updated_at: string;
@@ -214,5 +216,7 @@ export interface FormSummary {
   started_count: number;
   submitted_count: number;
   completion_rate: number | null;
+  /** Mean seconds from start to submit; null when there are no submissions. */
+  average_seconds_to_complete: number | null;
   questions: QuestionSummary[];
 }

@@ -4,8 +4,8 @@
  * results-screen.tsx — the Results tab of a form.
  *
  * What it does:   loads the summary and the responses, and switches between the
- *                 "Response summary" and "Responses" sub-tabs.
- * Depends on:     summary-tab.tsx, responses-tab.tsx, ui/form-header.tsx, lib/api.ts,
+ *                 "Form performance", "Response summary" and "Responses" sub-tabs.
+ * Depends on:     performance-tab.tsx, summary-tab.tsx, responses-tab.tsx, ui/form-header.tsx, lib/api.ts,
  *                 builder/use-form-editor.ts (for the form's title and renaming).
  * Depended on by: app/forms/[id]/results/page.tsx.
  */
@@ -17,14 +17,15 @@ import { useFormEditor } from "@/components/builder/use-form-editor";
 import { FormHeader } from "@/components/ui/form-header";
 import { getResponses, getSummary } from "@/lib/api";
 
+import { PerformanceTab } from "./performance-tab";
 import { ResponsesTab } from "./responses-tab";
 import { SummaryTab } from "./summary-tab";
 
-type ResultsTab = "summary" | "responses";
+type ResultsTab = "performance" | "summary" | "responses";
 
 export function ResultsScreen({ formId }: { formId: number }) {
   const editor = useFormEditor(formId);
-  const [activeTab, setActiveTab] = useState<ResultsTab>("summary");
+  const [activeTab, setActiveTab] = useState<ResultsTab>("performance");
 
   const summaryQuery = useQuery({ queryKey: ["summary", formId], queryFn: () => getSummary(formId) });
   const responsesQuery = useQuery({ queryKey: ["responses", formId], queryFn: () => getResponses(formId) });
@@ -42,6 +43,11 @@ export function ResultsScreen({ formId }: { formId: number }) {
 
       <main className="mx-4 mb-4 flex-1 overflow-hidden rounded-xl bg-admin-panel">
         <div role="tablist" className="flex gap-6 border-b border-white px-8">
+          <SubTab
+            label="Form performance"
+            isActive={activeTab === "performance"}
+            onClick={() => setActiveTab("performance")}
+          />
           <SubTab label="Response summary" isActive={activeTab === "summary"} onClick={() => setActiveTab("summary")} />
           <SubTab
             label={`Responses [${responseCount}]`}
@@ -51,6 +57,13 @@ export function ResultsScreen({ formId }: { formId: number }) {
         </div>
 
         <div className="p-4 sm:p-8">
+          {activeTab === "performance" &&
+            (summaryQuery.data === undefined ? (
+              <p className="text-admin-muted">{summaryQuery.isError ? "Could not load the numbers." : "Loading..."}</p>
+            ) : (
+              <PerformanceTab summary={summaryQuery.data} />
+            ))}
+
           {activeTab === "summary" &&
             (summaryQuery.data === undefined ? (
               <p className="text-admin-muted">{summaryQuery.isError ? "Could not load the summary." : "Loading..."}</p>

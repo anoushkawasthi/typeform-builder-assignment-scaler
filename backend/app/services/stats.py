@@ -148,6 +148,18 @@ def summarize_form(db: Session, form: Form) -> schemas.FormSummaryOut:
     if started_count > 0:
         completion_rate = round(100 * submitted_count / started_count, 1)
 
+    # julianday() turns a timestamp into a number of days, so the difference of two is
+    # a duration in days; multiplying by 86400 gives seconds. AVG ignores abandoned
+    # responses because their submitted_at is NULL.
+    average_days = db.scalar(
+        select(func.avg(func.julianday(Response.submitted_at) - func.julianday(Response.started_at))).where(
+            Response.form_id == form.id, Response.submitted_at.is_not(None)
+        )
+    )
+    average_seconds_to_complete = None
+    if average_days is not None:
+        average_seconds_to_complete = round(average_days * 86400, 1)
+
     question_summaries = []
     for question in snapshot.snapshot_questions(form):
         question_summaries.append(summarize_question(db, question))
@@ -156,5 +168,6 @@ def summarize_form(db: Session, form: Form) -> schemas.FormSummaryOut:
         started_count=started_count,
         submitted_count=submitted_count,
         completion_rate=completion_rate,
+        average_seconds_to_complete=average_seconds_to_complete,
         questions=question_summaries,
     )

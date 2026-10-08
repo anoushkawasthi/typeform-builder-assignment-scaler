@@ -46,11 +46,13 @@ export function QuestionCanvas({
   onRemoveChoice,
 }: QuestionCanvasProps) {
   return (
+    // Typeform shows the question in a fixed-shape "screen" centred in the white work
+    // area, rather than stretching it to fill the column.
     <FormTheme
       theme={theme}
-      className="flex min-h-full items-center justify-center rounded-lg border border-admin-border-soft px-6 py-16 sm:px-20"
+      className="mx-auto flex min-h-[475px] w-full max-w-[842px] items-center justify-center border border-admin-border-soft px-12 py-12 lg:px-[125px]"
     >
-      <div className="w-full max-w-[720px]">
+      <div className="w-full">
         <QuestionScreen
           // A new key per question gives each one fresh text boxes, so text typed in one
           // question can never show up in another when the selection changes.
@@ -63,6 +65,7 @@ export function QuestionCanvas({
           isActive={false}
           isInteractive={false}
           isLastQuestion={isLastQuestion}
+          hideButton
           titleContent={
             <AutosaveText
               value={question.title}

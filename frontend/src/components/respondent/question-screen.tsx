@@ -37,6 +37,8 @@ interface QuestionScreenProps {
   titleContent?: ReactNode;
   descriptionContent?: ReactNode;
   answerContent?: ReactNode;
+  /** Builder only: Typeform's canvas shows the question without the OK button. */
+  hideButton?: boolean;
 }
 
 export function QuestionScreen({
@@ -53,6 +55,7 @@ export function QuestionScreen({
   titleContent,
   descriptionContent,
   answerContent,
+  hideButton = false,
 }: QuestionScreenProps) {
   const titleId = `question-title-${question.id}`;
 
@@ -71,7 +74,10 @@ export function QuestionScreen({
         {number}
       </span>
 
-      <h1 id={titleId} className="text-[20px] font-normal leading-[28px] text-form-question sm:text-[26px] sm:leading-[34px]">
+      <h1
+        id={titleId}
+        className="text-[20px] font-normal leading-[28px] text-form-question sm:text-[26px] sm:leading-[34px]"
+      >
         {titleContent ?? (
           <>
             {question.title === "" ? "..." : question.title}
@@ -102,32 +108,38 @@ export function QuestionScreen({
 
       {/* Typeform shows the error in the place of the OK button, so there is always
           exactly one thing under the answer: what to do next, or what to fix. */}
-      <div className="mt-8 min-h-[40px]">
-        {error !== null ? (
-          <div
-            role="alert"
-            className="inline-flex items-center gap-2 rounded-[6px] bg-form-error-bg px-[10px] py-[6px] text-[14px] leading-[18px] text-form-error"
-          >
-            <AlertTriangle aria-hidden="true" className="h-4 w-4" />
-            {error}
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={onCommit}
-            disabled={!isInteractive || isSubmitting}
-            tabIndex={isInteractive && isActive ? 0 : -1}
-            className={
-              "inline-flex h-10 items-center rounded-lg bg-form-button px-[18px] text-[14px] font-semibold " +
-              "text-form-button-text transition-opacity duration-200 ease-form " +
-              (isInteractive ? "hover:opacity-80 " : "cursor-default ") +
-              (isSubmitting ? "opacity-60" : "")
-            }
-          >
-            {isLastQuestion ? (isSubmitting ? "Submitting..." : "Submit") : "OK"}
-          </button>
-        )}
-      </div>
+      {!hideButton && (
+        <div className="mt-8 min-h-[40px]">
+          {error !== null ? (
+            <div
+              role="alert"
+              className="inline-flex items-center gap-2 rounded-[6px] bg-form-error-bg px-[10px] py-[6px] text-[14px] leading-[18px] text-form-error"
+            >
+              <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+              {error}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onCommit}
+              disabled={!isInteractive || isSubmitting}
+              tabIndex={isInteractive && isActive ? 0 : -1}
+              className={
+                "inline-flex h-10 items-center rounded-lg bg-form-button px-[18px] text-[14px] font-semibold " +
+                "text-form-button-text transition-opacity duration-200 ease-form " +
+                (isInteractive ? "hover:opacity-80 " : "cursor-default ") +
+                (isSubmitting ? "opacity-60" : "")
+              }
+            >
+              {isLastQuestion
+                ? isSubmitting
+                  ? "Submitting..."
+                  : "Submit"
+                : "OK"}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

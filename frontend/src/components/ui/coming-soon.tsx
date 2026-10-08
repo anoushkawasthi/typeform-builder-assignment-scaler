@@ -12,7 +12,7 @@ import type { LucideIcon } from "lucide-react";
 
 export function ComingSoonBadge() {
   return (
-    <span className="rounded-full border border-admin-border px-2 py-[1px] text-[11px] leading-4 text-admin-muted">
+    <span className="shrink-0 whitespace-nowrap rounded-full border border-admin-border px-2 py-[1px] text-[11px] leading-4 text-admin-muted">
       Coming soon
     </span>
   );

@@ -133,6 +133,8 @@ class FormListItemOut(BaseModel):
     status: Literal["draft", "published"]
     response_count: int
     question_count: int
+    # Submitted responses as a percentage of started ones. None when nobody has started.
+    completion_rate: float | None
     has_unpublished_changes: bool
     created_at: datetime
     updated_at: datetime
@@ -304,4 +306,6 @@ class FormSummaryOut(BaseModel):
     submitted_count: int
     # submitted / started, as a percentage from 0 to 100. None when nobody has started.
     completion_rate: float | None
+    # Mean time from starting to submitting, in seconds. None when there are no submissions.
+    average_seconds_to_complete: float | None
     questions: list[QuestionSummaryOut]

@@ -167,7 +167,8 @@ export function BuilderScreen({ formId }: { formId: number }) {
             </Button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          {/* The work area: the canvas sits in the middle of it, as in Typeform. */}
+          <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto py-4">
             {selectedQuestion === undefined ? (
               <div className="flex h-full flex-col items-center justify-center rounded-xl bg-admin-panel text-center">
                 <h2 className="text-[21px] leading-7 text-admin-text">Add your first question</h2>

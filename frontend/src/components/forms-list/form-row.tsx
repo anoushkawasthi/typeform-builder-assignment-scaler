@@ -1,23 +1,23 @@
 "use client";
 
 /**
- * form-row.tsx — one form in the home page list.
+ * form-row.tsx — one form in the home page, as a list row or as a grid card.
  *
- * What it does:   shows a form's name, status, counts and last update, links to its
- *                 builder, and offers the "..." menu (rename, duplicate, results, copy
- *                 link, delete).
+ * What it does:   shows a form's name, status, response count, completion rate and last
+ *                 update, links to its builder, and offers the "..." menu (rename,
+ *                 duplicate, results, copy link, delete).
  * Depends on:     ui/menu.tsx, next/link.
  * Depended on by: forms-list-screen.tsx.
  */
 
-import { BarChart3, Copy, Link2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { BarChart3, Blocks, Copy, Link2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
 import type { FormListItem } from "@/lib/types";
 
-interface FormRowProps {
+export interface FormRowProps {
   form: FormListItem;
   onRename: () => void;
   onDuplicate: () => void;
@@ -30,67 +30,127 @@ function formatDate(isoString: string): string {
   return new Date(isoString).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 }
 
-export function FormRow({ form, onRename, onDuplicate, onDelete, onCopyLink }: FormRowProps) {
+/** "100%", or a dash when nobody has started the form yet. */
+function formatCompletion(completionRate: number | null): string {
+  if (completionRate === null) {
+    return "-";
+  }
+  return `${Math.round(completionRate)}%`;
+}
+
+/** The small Draft / Published tag. The brief asks for the status in the list. */
+function StatusChip({ form }: { form: FormListItem }) {
+  if (form.status === "published") {
+    return (
+      <span className="shrink-0 rounded-full border border-status-green/30 bg-status-green-bg px-2 py-[1px] text-[12px] leading-4 text-status-green">
+        {form.has_unpublished_changes ? "Published · edits" : "Published"}
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 rounded-full border border-admin-border px-2 py-[1px] text-[12px] leading-4 text-admin-muted">
+      Draft
+    </span>
+  );
+}
+
+/** The "..." menu, shared by the row and the card. */
+function FormActionsMenu({ form, onRename, onDuplicate, onDelete, onCopyLink }: FormRowProps) {
   const router = useRouter();
-  const isPublished = form.status === "published";
+  return (
+    <Menu
+      trigger={
+        <button
+          type="button"
+          aria-label={`Actions for ${form.title}`}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      }
+    >
+      <MenuItem onSelect={onRename}>
+        <Pencil aria-hidden="true" className="h-4 w-4" />
+        Rename
+      </MenuItem>
+      <MenuItem onSelect={onDuplicate}>
+        <Copy aria-hidden="true" className="h-4 w-4" />
+        Duplicate
+      </MenuItem>
+      <MenuItem onSelect={() => router.push(`/forms/${form.id}/results`)}>
+        <BarChart3 aria-hidden="true" className="h-4 w-4" />
+        Results
+      </MenuItem>
+      <MenuItem onSelect={onCopyLink} disabled={form.status !== "published"}>
+        <Link2 aria-hidden="true" className="h-4 w-4" />
+        Copy link
+      </MenuItem>
+      <MenuItem onSelect={onDelete} isDanger>
+        <Trash2 aria-hidden="true" className="h-4 w-4" />
+        Delete
+      </MenuItem>
+    </Menu>
+  );
+}
+
+/** The coloured square that stands in for a form's thumbnail. */
+function FormThumbnail({ sizeClass }: { sizeClass: string }) {
+  return <span aria-hidden="true" className={`shrink-0 rounded-lg bg-[#4B7BB5] ${sizeClass}`} />;
+}
+
+/** List view: one row. Column widths match the headings in forms-list-screen.tsx. */
+export function FormRow(props: FormRowProps) {
+  const { form } = props;
 
   return (
-    <li className="flex min-h-12 flex-wrap items-center gap-y-1 rounded-xl border border-admin-border-soft bg-white p-2 hover:border-admin-border">
+    <li className="flex min-h-12 items-center rounded-xl border border-admin-border bg-white p-2 hover:bg-white/60">
       <Link href={`/forms/${form.id}/create`} className="flex min-w-0 flex-1 items-center gap-3">
-        <span aria-hidden="true" className="h-8 w-8 shrink-0 rounded-lg bg-[#DDD6FA]" />
+        <FormThumbnail sizeClass="h-8 w-8" />
         <span className="truncate font-medium text-admin-text">{form.title}</span>
+        <StatusChip form={form} />
       </Link>
 
-      <span className="w-28">
-        {isPublished ? (
-          <span className="rounded-full border border-status-green/30 bg-status-green-bg px-2 py-[2px] text-[12px] text-status-green">
-            {form.has_unpublished_changes ? "Published · edits" : "Published"}
-          </span>
-        ) : (
-          <span className="rounded-full border border-admin-border px-2 py-[2px] text-[12px] text-admin-muted">Draft</span>
-        )}
-      </span>
-      <span className="hidden w-24 text-right text-admin-text md:block">{form.question_count}</span>
-      <span className="w-24 text-right text-admin-text">
-        {form.response_count}
-        <span className="text-admin-muted md:hidden"> responses</span>
-      </span>
-      <span className="hidden w-32 text-right text-admin-text md:block">{formatDate(form.updated_at)}</span>
-
-      <span className="flex w-12 justify-end">
-        <Menu
-          trigger={
-            <button
-              type="button"
-              aria-label={`Actions for ${form.title}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
-          }
+      <span className="w-20 text-center text-admin-text sm:w-28">{form.response_count === 0 ? "-" : form.response_count}</span>
+      <span className="hidden w-28 text-center text-admin-text md:block">{formatCompletion(form.completion_rate)}</span>
+      <span className="hidden w-32 text-admin-text md:block">{formatDate(form.updated_at)}</span>
+      <span className="hidden w-28 lg:block">
+        {/* Integrations are a placeholder in the brief; the icon mirrors Typeform's column. */}
+        <span
+          title="Integrations (coming soon)"
+          className="flex h-6 w-6 items-center justify-center rounded-md border border-admin-border text-admin-muted"
         >
-          <MenuItem onSelect={onRename}>
-            <Pencil aria-hidden="true" className="h-4 w-4" />
-            Rename
-          </MenuItem>
-          <MenuItem onSelect={onDuplicate}>
-            <Copy aria-hidden="true" className="h-4 w-4" />
-            Duplicate
-          </MenuItem>
-          <MenuItem onSelect={() => router.push(`/forms/${form.id}/results`)}>
-            <BarChart3 aria-hidden="true" className="h-4 w-4" />
-            Results
-          </MenuItem>
-          <MenuItem onSelect={onCopyLink} disabled={!isPublished}>
-            <Link2 aria-hidden="true" className="h-4 w-4" />
-            Copy link
-          </MenuItem>
-          <MenuItem onSelect={onDelete} isDanger>
-            <Trash2 aria-hidden="true" className="h-4 w-4" />
-            Delete
-          </MenuItem>
-        </Menu>
+          <Blocks aria-hidden="true" className="h-3.5 w-3.5" />
+        </span>
       </span>
+
+      <span className="flex w-10 justify-end">
+        <FormActionsMenu {...props} />
+      </span>
+    </li>
+  );
+}
+
+/** Grid view: one card. */
+export function FormCard(props: FormRowProps) {
+  const { form } = props;
+
+  return (
+    <li className="flex flex-col rounded-xl border border-admin-border bg-white hover:bg-white/60">
+      <Link href={`/forms/${form.id}/create`} className="flex h-32 items-center justify-center rounded-t-xl bg-[#4B7BB5] p-4">
+        <span className="line-clamp-3 text-center text-[16px] leading-5 text-white">{form.title}</span>
+      </Link>
+      <div className="flex items-center gap-2 p-2 pl-3">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium text-admin-text">{form.title}</span>
+          <span className="text-[12px] text-admin-muted">
+            {form.response_count === 0
+              ? "No responses"
+              : `${form.response_count} ${form.response_count === 1 ? "response" : "responses"}`}
+          </span>
+        </span>
+        <StatusChip form={form} />
+        <FormActionsMenu {...props} />
+      </div>
     </li>
   );
 }

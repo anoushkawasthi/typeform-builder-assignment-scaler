@@ -78,13 +78,20 @@ def present_question(question: Question, answer_count: int) -> schemas.QuestionO
 
 
 def present_form_list_item(db: Session, form: Form) -> schemas.FormListItemOut:
+    submitted_count = count_submitted_responses(db, form.id)
+    started_count = db.scalar(select(func.count(Response.id)).where(Response.form_id == form.id))
+    completion_rate = None
+    if started_count > 0:
+        completion_rate = round(100 * submitted_count / started_count, 1)
+
     return schemas.FormListItemOut(
         id=form.id,
         public_id=form.public_id,
         title=form.title,
         status=form.status,
-        response_count=count_submitted_responses(db, form.id),
+        response_count=submitted_count,
         question_count=len(snapshot.active_questions(form)),
+        completion_rate=completion_rate,
         has_unpublished_changes=snapshot.has_unpublished_changes(form),
         created_at=form.created_at,
         updated_at=form.updated_at,
