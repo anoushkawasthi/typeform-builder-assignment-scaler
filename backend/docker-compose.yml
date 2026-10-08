@@ -1,0 +1,25 @@
+# Runs the backend on a server. From this folder:
+#
+#   docker compose up -d --build     start, or update after `git pull`
+#   docker compose logs -f api       watch the logs
+#   docker compose down              stop (the database volume is kept)
+#
+# Settings come from a `.env` file next to this one (see .env.example).
+
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Sites whose pages may call this API from a browser, comma-separated.
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+    ports:
+      # Bound to 127.0.0.1 only: the API is reachable from the server itself (where the
+      # Cloudflare tunnel runs) but not directly from the internet.
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    volumes:
+      - sqlite-data:/data
+
+volumes:
+  # Holds the SQLite database file. Named, so it outlives the container.
+  sqlite-data:

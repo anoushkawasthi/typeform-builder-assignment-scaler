@@ -150,9 +150,11 @@ def make_fake_answer(question: Question, rng: random.Random, person_name: str) -
         else:
             answer.value_number = rng.choice([1, 3, 5, 8, 12, 20, 45])
     elif question.type == "rating":
-        # Skewed towards the top of the scale, like real satisfaction scores.
-        upper_half_start = (question.rating_max + 1) // 2
-        answer.value_number = rng.randint(upper_half_start, question.rating_max)
+        # Skewed towards the top of the scale, like real satisfaction scores: each
+        # step up the scale is twice as likely as the one below it.
+        possible_ratings = list(range(1, question.rating_max + 1))
+        weights = [2**rating for rating in possible_ratings]
+        answer.value_number = rng.choices(possible_ratings, weights=weights)[0]
     elif question.type == "yes_no":
         answer.value_boolean = rng.random() < 0.75
     elif question.type in ("multiple_choice", "dropdown"):
