@@ -302,9 +302,10 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
               y: { duration: SLIDE_SECONDS, ease: SLIDE_EASING },
               opacity: { duration: FADE_SECONDS, ease: "easeOut" },
             }}
-            // Wide screens: Typeform pads the block 35px above and 88px below, so although
-            // it is centred it sits a little above the middle of the window.
-            className="col-start-1 row-start-1 flex w-full items-center justify-center self-center px-6 py-20 @2xl:px-20 @2xl:pb-[88px] @2xl:pt-[35px]"
+            // Typeform pads the block 35px above and much more below (172px on phones,
+            // to clear the bottom bar; 88px on wide screens), so although it is centred
+            // it sits a little above the middle of the window.
+            className="col-start-1 row-start-1 flex w-full items-center justify-center self-center px-8 pb-[172px] pt-[35px] @2xl:px-20 @2xl:pb-[88px]"
           >
             <div className="w-full max-w-[720px]">
               {isFinished ? (
@@ -337,6 +338,9 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
         isFinished={isFinished}
         onPrevious={goBack}
         onNext={goForward}
+        advanceLabel={isSubmitting ? "Submitting..." : isLastQuestion ? "Submit" : "OK"}
+        onAdvance={advance}
+        isSubmitting={isSubmitting}
       />
     </FormTheme>
   );

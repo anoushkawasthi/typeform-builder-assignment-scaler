@@ -19,10 +19,11 @@ interface TextAnswerProps extends QuestionAnswerProps {
 }
 
 // Shared by the long-text field and the dropdown, so every underlined field looks
-// identical. The vertical padding is left to each of them: Typeform gives the one-line
-// fields 8px and the long-text field 6px.
+// identical. The vertical padding is left to each of them, because Typeform's differ:
+// one-line fields get 6px on phones and 8px on wide screens, the long-text field 8px
+// and 6px.
 export const UNDERLINED_FIELD_CLASSES =
-  "block w-full bg-transparent font-form text-[20px] leading-[28px] text-form-answer outline-none " +
+  "block w-full bg-transparent font-form text-[20px] leading-[26px] tracking-[-0.25px] text-form-answer outline-none " +
   // The placeholder is a little fainter while the field has the cursor.
   "placeholder:text-form-answer-40 focus:placeholder:text-form-answer-30 " +
   // Typeform tightens its large text by half a pixel per letter.
@@ -56,7 +57,7 @@ export function TextAnswer({ value, onChange, isActive, isInteractive, inputType
       tabIndex={isInteractive && isActive ? 0 : -1}
       autoComplete={inputType === "email" ? "email" : "off"}
       onChange={(event) => onChange({ text: event.target.value })}
-      className={`${UNDERLINED_FIELD_CLASSES} py-2`}
+      className={`${UNDERLINED_FIELD_CLASSES} py-[6px] @2xl:py-2`}
     />
   );
 }

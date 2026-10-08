@@ -67,7 +67,7 @@ export function QuestionScreen({
       <span
         aria-hidden="true"
         className={
-          "mb-2 inline-flex h-[19px] min-w-4 items-center justify-center rounded-[5px_3px] px-1 " +
+          "mb-3 flex h-[19px] w-fit min-w-4 items-center justify-center rounded-[5px_3px] px-1 " +
           "bg-form-question text-[11px] font-bold leading-none text-form-bg " +
           "@2xl:absolute @2xl:-left-[26px] @2xl:top-[8px] @2xl:mb-0"
         }
@@ -81,7 +81,7 @@ export function QuestionScreen({
       <div className="flex flex-col gap-2">
         <h1
           id={titleId}
-          className="text-[20px] font-normal leading-[28px] text-form-question @2xl:text-[26px] @2xl:leading-[34px] @2xl:tracking-[-0.5px]"
+          className="text-[20px] font-normal leading-[26px] tracking-[-0.25px] text-form-question @2xl:text-[26px] @2xl:leading-[34px] @2xl:tracking-[-0.5px]"
         >
           {titleContent ?? (
             <>
@@ -113,47 +113,44 @@ export function QuestionScreen({
 
       {/* Typeform shows the error in the place of the OK button, so there is always
           exactly one thing under the answer: what to do next, or what to fix. */}
-      {!hideButton && (
+      {!hideButton && error !== null && (
         <div className="mt-8 min-h-[40px]">
-          {error !== null ? (
-            <div
-              role="alert"
-              className="inline-flex items-center gap-2 rounded-[6px] bg-form-error-bg px-[10px] py-[6px] text-[14px] leading-[18px] text-form-error"
-            >
-              <AlertTriangle aria-hidden="true" className="h-4 w-4" />
-              {error}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={onCommit}
-              disabled={!isInteractive || isSubmitting}
-              tabIndex={isInteractive && isActive ? 0 : -1}
-              className={
-                "inline-flex h-10 items-center rounded-lg bg-form-button px-4 text-[18px] font-semibold leading-6 " +
-                "text-form-button-text-90 transition-opacity duration-200 ease-form " +
-                (isInteractive ? "hover:opacity-80 " : "cursor-default ") +
-                (isSubmitting ? "opacity-60" : "")
-              }
-            >
-              {isLastQuestion
-                ? isSubmitting
-                  ? "Submitting..."
-                  : "Submit"
-                : "OK"}
-            </button>
-          )}
-          {/* On the last question Typeform reminds keyboard users how to send the form.
-              Hidden on narrow screens, where there is usually no keyboard. */}
-          {error === null && isLastQuestion && isInteractive && (
-            <span className="ml-3 hidden align-middle text-[12px] text-form-answer @2xl:inline">
+          <div
+            role="alert"
+            className="inline-flex items-center gap-2 rounded-[6px] bg-form-error-bg px-[10px] py-[6px] text-[14px] leading-[18px] text-form-error"
+          >
+            <AlertTriangle aria-hidden="true" className="h-4 w-4" />
+            {error}
+          </div>
+        </div>
+      )}
+
+      {/* The button under the answer is for wide screens only. On a phone the same
+          action is the big button pinned to the bottom (flow-footer.tsx). */}
+      {!hideButton && error === null && (
+        <div className="mt-8 hidden min-h-[40px] @2xl:block">
+          <button
+            type="button"
+            onClick={onCommit}
+            disabled={!isInteractive || isSubmitting}
+            tabIndex={isInteractive && isActive ? 0 : -1}
+            className={
+              "inline-flex h-10 items-center rounded-lg bg-form-button px-4 text-[18px] font-semibold leading-6 " +
+              "text-form-button-text-90 transition-opacity duration-200 ease-form " +
+              (isInteractive ? "hover:opacity-80 " : "cursor-default ") +
+              (isSubmitting ? "opacity-60" : "")
+            }
+          >
+            {isLastQuestion ? (isSubmitting ? "Submitting..." : "Submit") : "OK"}
+          </button>
+          {/* On the last question Typeform reminds keyboard users how to send the form. */}
+          {isLastQuestion && isInteractive && (
+            <span className="ml-3 align-middle text-[12px] text-form-answer">
               press <strong className="font-semibold">Ctrl + Enter ↵</strong>
             </span>
           )}
           {/* Typeform prints this warning under every Submit button. */}
-          {error === null && isLastQuestion && (
-            <p className="mt-2 text-[14px] leading-[18px] text-form-answer-80">Never submit passwords!</p>
-          )}
+          {isLastQuestion && <p className="mt-2 text-[14px] leading-[18px] text-form-answer-80">Never submit passwords!</p>}
         </div>
       )}
     </div>

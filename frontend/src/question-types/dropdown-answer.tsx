@@ -135,7 +135,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
         tabIndex={isInteractive && isActive ? 0 : -1}
         onClick={openEmpty}
         className={
-          `${UNDERLINED_FIELD_CLASSES} relative py-2 pr-6 text-left ` +
+          `${UNDERLINED_FIELD_CLASSES} relative py-[6px] pr-6 text-left @2xl:py-2 ` +
           (selectedChoice === undefined ? "text-form-answer-40 " : "") +
           (isInteractive ? "cursor-pointer" : "cursor-default")
         }
@@ -166,7 +166,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
                 setHighlightedIndex(0);
               }}
               onKeyDown={handleSearchKeyDown}
-              className={`${UNDERLINED_FIELD_CLASSES} py-2 pr-6`}
+              className={`${UNDERLINED_FIELD_CLASSES} py-[6px] pr-6 @2xl:py-2`}
             />
             <Search aria-hidden="true" className="absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-form-answer" />
           </div>
