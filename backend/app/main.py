@@ -17,7 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401  (importing registers the tables on Base)
-from app.database import Base, SessionLocal, engine
+from app.database import Base, SessionLocal, add_missing_columns, engine
 from app.routers import forms, logic_jumps, public, questions, responses
 from app.seed import seed_if_empty
 
@@ -34,6 +34,7 @@ async def lifespan(_app: FastAPI):
     a single schema version. Seeding only when the database is empty makes a fresh
     deployment immediately usable without ever overwriting real data.
     """
+    add_missing_columns(engine)
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_if_empty(db)

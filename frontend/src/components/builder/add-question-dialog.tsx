@@ -10,7 +10,7 @@
  * Depended on by: builder-screen.tsx.
  */
 
-import { Search } from "lucide-react";
+import { PanelLeftOpen, Search } from "lucide-react";
 import { useState } from "react";
 
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
@@ -23,9 +23,11 @@ interface AddQuestionDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onPick: (type: QuestionType) => void;
+  /** Add a welcome screen. Left out when the form already has one. */
+  onPickWelcome?: () => void;
 }
 
-export function AddQuestionDialog({ isOpen, onClose, onPick }: AddQuestionDialogProps) {
+export function AddQuestionDialog({ isOpen, onClose, onPick, onPickWelcome }: AddQuestionDialogProps) {
   const [searchText, setSearchText] = useState("");
   const search = searchText.trim().toLowerCase();
 
@@ -59,9 +61,23 @@ export function AddQuestionDialog({ isOpen, onClose, onPick }: AddQuestionDialog
               className="w-full bg-transparent outline-none placeholder:text-admin-muted"
             />
           </label>
-          <p className="mt-6 px-2 text-[13px] leading-5 text-admin-muted">
-            Pick a question type to add it after the selected question.
-          </p>
+          {/* Typeform's "Recommended" entry. Shown only while the form has no welcome screen. */}
+          {onPickWelcome !== undefined && matchesSearch("Welcome Screen") && (
+            <>
+              <h3 className="mb-2 mt-6 px-2 font-medium text-admin-text">Recommended</h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchText("");
+                  onPickWelcome();
+                }}
+                className="flex h-[38px] w-full items-center gap-3 rounded-lg border border-admin-border pl-2 pr-3 text-left text-admin-muted hover:bg-admin-hover"
+              >
+                <IconTile color="#DEDCDE" icon={PanelLeftOpen} />
+                Welcome Screen
+              </button>
+            </>
+          )}
         </div>
 
         {/* Right: the question types in colour-coded groups. */}

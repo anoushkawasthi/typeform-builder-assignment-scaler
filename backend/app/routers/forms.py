@@ -130,6 +130,10 @@ def duplicate_form(form_id: int, db: Session = Depends(get_db), creator: Creator
         theme_button_color=original.theme_button_color,
         theme_button_text_color=original.theme_button_text_color,
         theme_font=original.theme_font,
+        welcome_enabled=original.welcome_enabled,
+        welcome_title=original.welcome_title,
+        welcome_text=original.welcome_text,
+        welcome_button_text=original.welcome_button_text,
         thank_you_title=original.thank_you_title,
         thank_you_text=original.thank_you_text,
     )

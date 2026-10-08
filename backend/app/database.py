@@ -10,7 +10,7 @@ Depended on by: models.py (uses `Base`), every router (uses `get_db`), main.py a
 
 import os
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -63,6 +63,38 @@ engine = make_engine(DATABASE_URL)
 # autoflush stays on (the default) so a query inside a request sees rows added earlier in
 # the same request. Nothing is saved to disk until we call commit().
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
+
+
+# Columns added to existing tables after the first release. `create_all` creates missing
+# TABLES but never changes a table that already exists, so a database made by an older
+# version of the code would lack these. Each entry is (table, column, SQL definition).
+ADDED_COLUMNS = [
+    ("forms", "welcome_enabled", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("forms", "welcome_title", "VARCHAR(255) NOT NULL DEFAULT ''"),
+    ("forms", "welcome_text", "TEXT NOT NULL DEFAULT ''"),
+    ("forms", "welcome_button_text", "VARCHAR(24) NOT NULL DEFAULT 'Start'"),
+]
+
+
+def add_missing_columns(target_engine) -> None:
+    """
+    A very small migration step: add any column from ADDED_COLUMNS that the database
+    does not have yet. Existing rows get the column's default, so no data is lost.
+
+    Why not a migration tool such as Alembic: the only schema changes so far are a few
+    added columns, and this is a dozen lines that can be read top to bottom.
+    """
+    inspector = inspect(target_engine)
+    existing_tables = inspector.get_table_names()
+
+    with target_engine.begin() as connection:
+        for table_name, column_name, definition in ADDED_COLUMNS:
+            if table_name not in existing_tables:
+                # A brand-new database: create_all will make the table with every column.
+                continue
+            existing_columns = [column["name"] for column in inspector.get_columns(table_name)]
+            if column_name not in existing_columns:
+                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}"))
 
 
 class Base(DeclarativeBase):

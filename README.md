@@ -19,7 +19,7 @@ The demo opens straight into the workspace of a default creator; there is no log
 | Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), Sonner (toasts), Lucide (icons) |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2 |
 | Database | SQLite |
-| Tests | pytest (33 tests: validation rules, logic jumps and API routes) |
+| Tests | pytest (34 tests: validation rules, logic jumps and API routes) |
 | Hosting | Frontend on Vercel; backend as a systemd service on a VPS behind a Cloudflare Tunnel, SQLite on the server's disk (a Dockerfile and Compose file are included as an alternative) |
 
 ## Features
@@ -44,6 +44,8 @@ of responses; a single response in full; CSV export.
 **Logic jumps** — per-question rules such as "if the answer is No, go to question 6" or
 "if the rating is less than 3, end the form"; edited in the builder's Logic panel, shown
 together on the Workflow tab, followed in the form and re-checked on the server.
+
+**Welcome screen** — an optional first screen with a title, text and a Start button.
 
 **Text formatting** — select text in a title, description or choice in the builder to
 make it bold or italic; stored as plain-text markers (`**bold**`, `*italic*`), never HTML.
@@ -136,7 +138,7 @@ creators ──< forms ──< questions ──< question_choices
 | Table | Columns | Purpose |
 |---|---|---|
 | `creators` | id, name, email (unique), created_at | Who owns forms. One seeded row. |
-| `forms` | id, creator_id → creators, public_id (unique), title, status, published_snapshot (JSON), published_at, theme_background_color, theme_question_color, theme_answer_color, theme_button_color, theme_button_text_color, theme_font, thank_you_title, thank_you_text, created_at, updated_at | A form. Its `questions` rows are the draft; `published_snapshot` is the live copy. |
+| `forms` | id, creator_id → creators, public_id (unique), title, status, published_snapshot (JSON), published_at, theme_background_color, theme_question_color, theme_answer_color, theme_button_color, theme_button_text_color, theme_font, welcome_enabled, welcome_title, welcome_text, welcome_button_text, thank_you_title, thank_you_text, created_at, updated_at | A form. Its `questions` rows are the draft; `published_snapshot` is the live copy. |
 | `questions` | id, form_id → forms, type, title, description, is_required, position, allow_multiple, rating_max, deleted_at | One question; `position` is its order. |
 | `question_choices` | id, question_id → questions, label, position, deleted_at | Options of multiple-choice and dropdown questions. |
 | `logic_jumps` | id, question_id → questions, position, operator, compare_choice_id → question_choices, compare_number, compare_boolean, target_question_id → questions | One rule: "if the answer `operator` `compare value`, go to `target`". An empty target means the end of the form. |

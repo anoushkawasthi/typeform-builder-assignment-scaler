@@ -117,6 +117,12 @@ class Form(Base):
     theme_button_text_color: Mapped[str] = mapped_column(String(9), default="#FAFAFA")
     theme_font: Mapped[str] = mapped_column(String(60), default="Inter")
 
+    # Optional welcome screen shown before the first question.
+    welcome_enabled: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    welcome_title: Mapped[str] = mapped_column(String(255), default="", server_default="")
+    welcome_text: Mapped[str] = mapped_column(Text, default="", server_default="")
+    welcome_button_text: Mapped[str] = mapped_column(String(24), default="Start", server_default="Start")
+
     # Text of the screen shown after submitting.
     thank_you_title: Mapped[str] = mapped_column(String(255), default="Thanks for completing this form")
     thank_you_text: Mapped[str] = mapped_column(Text, default="Your answers have been recorded.")

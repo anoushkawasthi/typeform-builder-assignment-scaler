@@ -94,6 +94,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
     panelLeft: number;
     panelTop: number;
     panelWidth: number;
+    panelHeight: number;
   } | null>(null);
 
   function startDrag(event: React.PointerEvent<HTMLButtonElement>) {
@@ -110,6 +111,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
       panelLeft: box.left,
       panelTop: box.top,
       panelWidth: box.width,
+      panelHeight: box.height,
     };
     // "Capturing" the pointer keeps the move events coming to the grip even when the
     // pointer travels outside it, so no window-level listeners are needed.
@@ -124,14 +126,15 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
     let moveX = event.clientX - start.pointerX;
     let moveY = event.clientY - start.pointerY;
 
-    // Keep the panel on screen: its left and right edges may not pass the window's,
-    // and its header (the part you drag by) must stay visible at the top and bottom.
+    // Keep the whole panel inside the window on all four sides. (Letting part of it
+    // hang below the bottom edge made the page itself grow and scroll.)
     const margin = 8;
-    const headerHeight = 48;
     const minMoveX = margin - start.panelLeft;
     const maxMoveX = window.innerWidth - margin - start.panelWidth - start.panelLeft;
     const minMoveY = margin - start.panelTop;
-    const maxMoveY = window.innerHeight - headerHeight - start.panelTop;
+    const maxMoveY = window.innerHeight - margin - start.panelHeight - start.panelTop;
+    // The outer Math.max covers a panel bigger than the window: then it stays at the
+    // top-left limit instead of jumping about.
     moveX = Math.min(Math.max(moveX, minMoveX), Math.max(maxMoveX, minMoveX));
     moveY = Math.min(Math.max(moveY, minMoveY), Math.max(maxMoveY, minMoveY));
 

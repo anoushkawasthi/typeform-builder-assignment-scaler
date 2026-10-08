@@ -35,12 +35,16 @@ import { QuestionCanvas } from "./question-canvas";
 import { QuestionList } from "./question-list";
 import { QuestionSettings } from "./question-settings";
 import { useFormEditor } from "./use-form-editor";
+import { WelcomeCanvas } from "./welcome-canvas";
+import { WelcomeSettings } from "./welcome-settings";
 
 export function BuilderScreen({ formId }: { formId: number }) {
   const editor = useFormEditor(formId);
   const form = editor.form;
 
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
+  // True while the welcome screen (not a question) is what the canvas shows.
+  const [isWelcomeSelected, setIsWelcomeSelected] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isEndingOpen, setIsEndingOpen] = useState(false);
@@ -68,6 +72,26 @@ export function BuilderScreen({ formId }: { formId: number }) {
   const selectedQuestion = questions.find((question) => question.id === selectedQuestionId) ?? questions[0];
   const selectedIndex = selectedQuestion === undefined ? -1 : questions.indexOf(selectedQuestion);
 
+  // The welcome screen can only be shown while the form actually has one.
+  const showsWelcome = isWelcomeSelected && form.welcome_enabled;
+
+  function selectQuestion(questionId: number) {
+    setIsWelcomeSelected(false);
+    setSelectedQuestionId(questionId);
+  }
+
+  function addWelcomeScreen() {
+    setIsAddDialogOpen(false);
+    editor.updateForm({ welcome_enabled: true });
+    setIsWelcomeSelected(true);
+  }
+
+  function removeWelcomeScreen() {
+    editor.updateForm({ welcome_enabled: false });
+    setIsWelcomeSelected(false);
+    toast.success("Welcome screen removed");
+  }
+
   async function handleAddQuestion(type: QuestionType) {
     setIsAddDialogOpen(false);
     const existingIds = questions.map((question) => question.id);
@@ -77,7 +101,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
       const updatedForm = await editor.addQuestion(type, position);
       const newQuestion = updatedForm.questions.find((question) => !existingIds.includes(question.id));
       if (newQuestion !== undefined) {
-        setSelectedQuestionId(newQuestion.id);
+        selectQuestion(newQuestion.id);
       }
     } catch {
       // The editor already showed the error in a toast.
@@ -90,7 +114,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
       const updatedForm = await editor.duplicateQuestion(question.id);
       const copy = updatedForm.questions.find((item) => !existingIds.includes(item.id));
       if (copy !== undefined) {
-        setSelectedQuestionId(copy.id);
+        selectQuestion(copy.id);
       }
     } catch {
       // The editor already showed the error in a toast.
@@ -117,7 +141,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
   }
 
   return (
-    <div className="flex h-dvh min-w-[1024px] flex-col">
+    <div className="flex h-dvh min-w-[1024px] flex-col overflow-hidden">
       <FormHeader
         formId={form.id}
         formTitle={form.title}
@@ -138,8 +162,12 @@ export function BuilderScreen({ formId }: { formId: number }) {
         <div className="flex min-h-0 flex-col gap-3">
           <QuestionList
             questions={questions}
-            selectedQuestionId={selectedQuestion?.id ?? null}
-            onSelect={setSelectedQuestionId}
+            selectedQuestionId={showsWelcome ? null : (selectedQuestion?.id ?? null)}
+            onSelect={selectQuestion}
+            welcomeTitle={form.welcome_enabled ? form.welcome_title : null}
+            isWelcomeSelected={showsWelcome}
+            onSelectWelcome={() => setIsWelcomeSelected(true)}
+            onAddWelcome={addWelcomeScreen}
             onReorder={editor.reorderQuestions}
             onDuplicate={(question) => void duplicateQuestion(question)}
             onDelete={requestDelete}
@@ -208,7 +236,9 @@ export function BuilderScreen({ formId }: { formId: number }) {
           {/* The work area. The canvas sits a fixed distance below the toolbar, as in
               Typeform, rather than being centred. */}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-4 pt-[min(104px,10vh)]">
-            {selectedQuestion === undefined ? (
+            {showsWelcome ? (
+              <WelcomeCanvas form={form} onUpdate={editor.updateForm} />
+            ) : selectedQuestion === undefined ? (
               <div className="flex h-full flex-col items-center justify-center rounded-xl bg-admin-panel text-center">
                 <h2 className="text-[21px] leading-7 text-admin-text">Add your first question</h2>
                 <p className="mt-2 text-admin-muted">Pick a question type to start building this form.</p>
@@ -233,7 +263,9 @@ export function BuilderScreen({ formId }: { formId: number }) {
         </div>
 
         {/* Right column: settings of the selected question. */}
-        {selectedQuestion === undefined ? (
+        {showsWelcome ? (
+          <WelcomeSettings form={form} onUpdate={editor.updateForm} onRemove={removeWelcomeScreen} />
+        ) : selectedQuestion === undefined ? (
           <aside className="rounded-xl bg-admin-panel p-4 text-admin-muted">Question settings appear here.</aside>
         ) : (
           <QuestionSettings
@@ -244,7 +276,12 @@ export function BuilderScreen({ formId }: { formId: number }) {
         )}
       </div>
 
-      <AddQuestionDialog isOpen={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} onPick={handleAddQuestion} />
+      <AddQuestionDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onPick={handleAddQuestion}
+        onPickWelcome={form.welcome_enabled ? undefined : addWelcomeScreen}
+      />
 
       {isLogicOpen && selectedQuestion !== undefined && (
         <LogicDialog

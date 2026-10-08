@@ -26,6 +26,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   SortableContext,
   arrayMove,
@@ -34,7 +35,18 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowRight, ChevronDown, ChevronUp, CopyPlus, Lightbulb, MoreVertical, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  CopyPlus,
+  GitBranch,
+  Lightbulb,
+  MoreVertical,
+  PanelLeftOpen,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { QuestionTypeChip } from "@/components/ui/question-type-chip";
@@ -51,6 +63,11 @@ interface QuestionListProps {
   onAddClick: () => void;
   /** Open the Logic dialog (the branching shortcut under the list). */
   onOpenLogic: () => void;
+  /** The welcome screen's title if the form has one, or null if it has none. */
+  welcomeTitle: string | null;
+  isWelcomeSelected: boolean;
+  onSelectWelcome: () => void;
+  onAddWelcome: () => void;
 }
 
 export function QuestionList({
@@ -62,6 +79,10 @@ export function QuestionList({
   onDelete,
   onAddClick,
   onOpenLogic,
+  welcomeTitle,
+  isWelcomeSelected,
+  onSelectWelcome,
+  onAddWelcome,
 }: QuestionListProps) {
   const sensors = useSensors(
     // A drag only starts after the pointer moves 5px, so a plain click still selects.
@@ -93,7 +114,35 @@ export function QuestionList({
       <h2 className="px-5 pb-3 pt-5 font-medium text-[#262627]">Questions</h2>
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-3 pb-3">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        {/* The welcome screen always comes first and cannot be dragged. */}
+        {welcomeTitle !== null && (
+          <button
+            type="button"
+            onClick={onSelectWelcome}
+            aria-pressed={isWelcomeSelected}
+            className={
+              "flex min-h-12 w-full shrink-0 items-center gap-3 rounded-lg px-2 py-2 text-left " +
+              (isWelcomeSelected ? "bg-admin-hover" : "hover:bg-admin-hover")
+            }
+          >
+            <span className="flex h-6 w-12 shrink-0 items-center justify-center rounded-[6px] bg-[#DEDCDE] text-admin-text">
+              <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />
+            </span>
+            <span className="line-clamp-2 flex-1 text-[13px] leading-[17px] text-admin-text">
+              {stripFormatting(welcomeTitle)}
+            </span>
+          </button>
+        )}
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          // Two limits on where a dragged card may go. Vertical only: the list is one
+          // column. Inside the list only: without this a card could be dragged below
+          // the last one for ever, and the list kept growing and scrolling to follow it.
+          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext items={questions.map((question) => question.id)} strategy={verticalListSortingStrategy}>
             {questions.map((question, index) => (
               <QuestionCard
@@ -127,6 +176,21 @@ export function QuestionList({
         )}
       </div>
 
+      {/* Offered until the form has a welcome screen, as in Typeform. */}
+      {welcomeTitle === null && (
+        <button
+          type="button"
+          onClick={onAddWelcome}
+          className="mx-3 mb-2 flex shrink-0 items-center gap-3 rounded-xl border border-dashed border-admin-border px-3 py-2 text-left text-admin-text hover:bg-admin-hover"
+        >
+          <Lightbulb aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-[13px] leading-[17px]">Add Welcome Screen</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-admin-border bg-white/80">
+            <Plus aria-hidden="true" className="h-4 w-4" />
+          </span>
+        </button>
+      )}
+
       {/* Typeform's shortcut to its logic features: opens the Logic dialog. */}
       {questions.length > 1 && (
         <button
@@ -134,7 +198,7 @@ export function QuestionList({
           onClick={onOpenLogic}
           className="mx-3 mb-3 flex shrink-0 items-center gap-3 rounded-xl border border-dashed border-admin-border px-3 py-3 text-left text-admin-text hover:bg-admin-hover"
         >
-          <Lightbulb aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <GitBranch aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span className="flex-1 text-[13px] leading-[17px]">Personalize with branching</span>
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-admin-border bg-white/80">
             <ArrowRight aria-hidden="true" className="h-4 w-4" />
@@ -177,10 +241,7 @@ function QuestionCard({
   return (
     <div
       ref={setNodeRef}
-      // The list is one column, so a dragged card may only move up and down: its
-      // sideways offset is forced to 0. Without this, dragging to the right pushed the
-      // card out of the panel and made the list scroll sideways.
-      style={{ transform: CSS.Translate.toString(transform === null ? null : { ...transform, x: 0 }), transition }}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
       className={
         // Typeform's cards are outlines on the panel, not white tiles.
         "group relative shrink-0 rounded-xl border border-admin-border bg-admin-panel p-1 " +

@@ -100,6 +100,10 @@ export interface FormDetail {
   has_unpublished_changes: boolean;
   answers_lost_on_publish: number;
   theme: Theme;
+  welcome_enabled: boolean;
+  welcome_title: string;
+  welcome_text: string;
+  welcome_button_text: string;
   thank_you_title: string;
   thank_you_text: string;
   published_at: string | null;
@@ -111,6 +115,10 @@ export interface FormDetail {
 /** Fields that PATCH /api/forms/{id} accepts. All optional. */
 export interface FormUpdate {
   title?: string;
+  welcome_enabled?: boolean;
+  welcome_title?: string;
+  welcome_text?: string;
+  welcome_button_text?: string;
   thank_you_title?: string;
   thank_you_text?: string;
   theme_background_color?: string;
@@ -132,9 +140,18 @@ export interface QuestionUpdate {
 }
 
 /** What the respondent flow needs. The public API and the builder preview both produce it. */
+/** The optional screen shown before the first question. */
+export interface Welcome {
+  title: string;
+  text: string;
+  button_text: string;
+}
+
 export interface FillableForm {
   title: string;
   theme: Theme;
+  /** Missing or null when the form has no welcome screen. */
+  welcome?: Welcome | null;
   thank_you_title: string;
   thank_you_text: string;
   questions: RenderableQuestion[];

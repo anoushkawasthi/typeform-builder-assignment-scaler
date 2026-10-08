@@ -14,6 +14,7 @@
  */
 
 import { Monitor, RotateCw, Smartphone, X } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
 import { FormFlow } from "@/components/respondent/form-flow";
@@ -46,13 +47,25 @@ export function PreviewOverlay({ form, onClose }: PreviewOverlayProps) {
   const fillableForm: FillableForm = {
     title: form.title,
     theme: form.theme,
+    welcome: form.welcome_enabled
+      ? { title: form.welcome_title, text: form.welcome_text, button_text: form.welcome_button_text }
+      : null,
     thank_you_title: form.thank_you_title,
     thank_you_text: form.thank_you_text,
     questions: form.questions,
   };
 
   return (
-    <div role="dialog" aria-label="Preview" className="fixed inset-0 z-50 flex flex-col items-center overflow-auto bg-white px-4 pb-6">
+    // Typeform's preview eases in rather than appearing at once: the white layer fades
+    // in while the frame (below) rises slightly into place.
+    <motion.div
+      role="dialog"
+      aria-label="Preview"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="fixed inset-0 z-50 flex flex-col items-center overflow-auto bg-white px-4 pb-6"
+    >
       <div className="mt-5 flex shrink-0 items-center gap-2 rounded-xl bg-admin-panel p-2">
         <button type="button" aria-label="Close preview" title="Close preview" onClick={onClose} className={BAR_BUTTON_CLASSES}>
           <X className="h-4 w-4" />
@@ -83,7 +96,10 @@ export function PreviewOverlay({ form, onClose }: PreviewOverlayProps) {
       {/* The frame. `relative` makes it the box that the embedded form fills, and its
           width is what the form's own layout responds to (see form-theme.tsx), so the
           phone-sized frame really shows the phone layout. */}
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
         className={
           "relative mt-[min(72px,6dvh)] shrink-0 overflow-hidden border border-admin-border-soft shadow-[0_1px_4px_rgba(60,50,62,0.08)] " +
           "transition-[width,height] duration-300 " +
@@ -99,9 +115,9 @@ export function PreviewOverlay({ form, onClose }: PreviewOverlayProps) {
           // Nothing is sent anywhere: the preview only pretends to submit.
           onSubmit={async () => {}}
         />
-      </div>
+      </motion.div>
 
       <p className="mt-3 text-[12px] text-admin-muted">Preview of your draft. Answers given here are not saved.</p>
-    </div>
+    </motion.div>
   );
 }

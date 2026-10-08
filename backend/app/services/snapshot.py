@@ -97,6 +97,14 @@ def build_snapshot(form: Form) -> dict:
             }
         )
 
+    welcome = None
+    if form.welcome_enabled:
+        welcome = {
+            "title": form.welcome_title,
+            "text": form.welcome_text,
+            "button_text": form.welcome_button_text,
+        }
+
     return {
         "title": form.title,
         "theme": {
@@ -107,6 +115,7 @@ def build_snapshot(form: Form) -> dict:
             "button_text_color": form.theme_button_text_color,
             "font": form.theme_font,
         },
+        "welcome": welcome,
         "thank_you_title": form.thank_you_title,
         "thank_you_text": form.thank_you_text,
         "questions": question_dicts,

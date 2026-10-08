@@ -153,6 +153,10 @@ class FormDetailOut(BaseModel):
     # because their question or choice was deleted from the draft.
     answers_lost_on_publish: int
     theme: ThemeOut
+    welcome_enabled: bool
+    welcome_title: str
+    welcome_text: str
+    welcome_button_text: str
     thank_you_title: str
     thank_you_text: str
     published_at: datetime | None
@@ -172,6 +176,10 @@ class FormUpdate(BaseModel):
     """Every field is optional: rename, theme and thank-you edits all use this."""
 
     title: str | None = Field(default=None, min_length=1, max_length=255)
+    welcome_enabled: bool | None = None
+    welcome_title: str | None = Field(default=None, max_length=255)
+    welcome_text: str | None = Field(default=None, max_length=5000)
+    welcome_button_text: str | None = Field(default=None, min_length=1, max_length=24)
     thank_you_title: str | None = Field(default=None, max_length=255)
     thank_you_text: str | None = Field(default=None, max_length=5000)
     theme_background_color: str | None = Field(default=None, pattern=HEX_COLOR_PATTERN)
@@ -202,12 +210,22 @@ class PublicQuestionOut(BaseModel):
     logic_jumps: list[LogicJumpOut] = []
 
 
+class WelcomeOut(BaseModel):
+    """The welcome screen shown before the first question."""
+
+    title: str
+    text: str
+    button_text: str
+
+
 class PublicFormOut(BaseModel):
     """What a respondent's browser receives: the published snapshot, nothing else."""
 
     public_id: str
     title: str
     theme: ThemeOut
+    # None when the form has no welcome screen (or was published before they existed).
+    welcome: WelcomeOut | None = None
     thank_you_title: str
     thank_you_text: str
     questions: list[PublicQuestionOut]

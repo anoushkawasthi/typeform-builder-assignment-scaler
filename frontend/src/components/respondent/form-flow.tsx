@@ -28,6 +28,7 @@ import { FormTheme } from "./form-theme";
 import { ProgressBar } from "./progress-bar";
 import { QuestionScreen } from "./question-screen";
 import { ThankYouScreen } from "./thank-you-screen";
+import { WelcomeScreen } from "./welcome-screen";
 
 interface FormFlowProps {
   form: FillableForm;
@@ -44,6 +45,9 @@ interface FormFlowProps {
    */
   isEmbedded?: boolean;
 }
+
+// The value of `currentIndex` while the welcome screen is showing.
+const WELCOME_INDEX = -1;
 
 // +1 = moving forward (new question comes up from below), -1 = moving back.
 type Direction = 1 | -1;
@@ -63,8 +67,11 @@ function hasAnswerErrors(error: unknown): error is { answerErrors: AnswerError[]
 export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFlowProps) {
   const questions = form.questions;
 
-  // Which screen is showing. 0..n-1 are questions; n is the thank-you screen.
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const welcome = form.welcome ?? null;
+
+  // Which screen is showing. 0..n-1 are questions; n is the thank-you screen; -1 is the
+  // welcome screen, which is where a form that has one starts.
+  const [currentIndex, setCurrentIndex] = useState(welcome === null ? 0 : WELCOME_INDEX);
   const [direction, setDirection] = useState<Direction>(1);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +85,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
 
   const prefersReducedMotion = useReducedMotion();
   const isFinished = currentIndex >= questions.length;
+  const isOnWelcome = currentIndex === WELCOME_INDEX;
 
   function handleAnswerChange(questionId: number, value: AnswerValue) {
     const nextAnswers = { ...answersRef.current, [questionId]: value };
@@ -126,6 +134,11 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
     if (isFinished || isSubmitting) {
       return;
     }
+    // Nothing to validate on the welcome screen: Start simply shows question 1.
+    if (currentIndex === WELCOME_INDEX) {
+      goToIndex(0, 1);
+      return;
+    }
     const question = questions[currentIndex];
     const message = validateAnswer(question, answersRef.current[question.id]);
     if (message !== null) {
@@ -144,7 +157,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
   }, [currentIndex, isFinished, isSubmitting, questions]);
 
   const goBack = useCallback(() => {
-    if (isFinished || isSubmitting || currentIndex === 0) {
+    if (isFinished || isSubmitting || currentIndex <= 0) {
       return;
     }
     // Go back along the path actually taken, so a question that a logic jump skipped
@@ -238,7 +251,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
 
   return (
     <FormTheme theme={form.theme} className={(isEmbedded ? "absolute" : "fixed") + " inset-0 overflow-hidden"}>
-      {!isFinished && <ProgressBar answered={answeredCount} total={questions.length} />}
+      {!isFinished && !isOnWelcome && <ProgressBar answered={answeredCount} total={questions.length} />}
 
       {/* Every screen is placed in the same grid cell, so the outgoing and incoming
           questions overlap while they cross-fade instead of pushing each other around. */}
@@ -247,7 +260,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
             already leaving; `initial={false}` skips the animation on first load. */}
         <AnimatePresence initial={false} custom={direction}>
           <motion.div
-            key={isFinished ? "thank-you" : questions[currentIndex].id}
+            key={isFinished ? "thank-you" : isOnWelcome ? "welcome" : questions[currentIndex].id}
             custom={direction}
             variants={slideVariants}
             initial="enter"
@@ -262,6 +275,8 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
             <div className="w-full max-w-[720px]">
               {isFinished ? (
                 <ThankYouScreen title={form.thank_you_title} text={form.thank_you_text} />
+              ) : isOnWelcome && welcome !== null ? (
+                <WelcomeScreen title={welcome.title} text={welcome.text} buttonText={welcome.button_text} onStart={advance} />
               ) : (
                 <QuestionScreen
                   question={questions[currentIndex]}
@@ -286,7 +301,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
       </main>
 
       <FlowFooter
-        showNavigation={!isFinished}
+        showNavigation={!isFinished && !isOnWelcome}
         canGoBack={currentIndex > 0}
         onPrevious={goBack}
         onNext={advance}

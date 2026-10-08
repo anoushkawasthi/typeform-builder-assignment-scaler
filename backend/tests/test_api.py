@@ -309,3 +309,27 @@ def test_duplicate_question_goes_right_after_the_original(client):
     assert copy["title"] == "Pick" and copy["is_required"] is True
     assert [choice["label"] for choice in copy["choices"]] == ["One"]
     assert copy["choices"][0]["id"] != multiple_choice["choices"][0]["id"]
+
+
+def test_welcome_screen_is_published_with_the_form(client):
+    form = client.post("/api/forms", json={"title": "Welcome"}).json()
+    assert form["welcome_enabled"] is False
+    client.post(f"/api/forms/{form['id']}/questions", json={"type": "short_text"})
+
+    client.post(f"/api/forms/{form['id']}/publish")
+    assert client.get(f"/api/public/forms/{form['public_id']}").json()["welcome"] is None
+
+    updated = client.patch(
+        f"/api/forms/{form['id']}",
+        json={"welcome_enabled": True, "welcome_title": "Hi", "welcome_text": "Two minutes", "welcome_button_text": "Go"},
+    ).json()
+    assert updated["welcome_enabled"] is True and updated["has_unpublished_changes"] is True
+
+    # Like every other edit, it reaches respondents only after publishing again.
+    assert client.get(f"/api/public/forms/{form['public_id']}").json()["welcome"] is None
+    client.post(f"/api/forms/{form['id']}/publish")
+    assert client.get(f"/api/public/forms/{form['public_id']}").json()["welcome"] == {
+        "title": "Hi",
+        "text": "Two minutes",
+        "button_text": "Go",
+    }
