@@ -52,7 +52,9 @@ export function QuestionCanvas({
       theme={theme}
       className="mx-auto flex min-h-[475px] w-full max-w-[842px] items-center justify-center border border-admin-border-soft px-12 py-12 lg:px-[125px]"
     >
-      <div className="w-full">
+      {/* Typeform draws the canvas at three-quarter size, so a whole question fits in
+          the box. `zoom` scales the content and its layout together. */}
+      <div className="w-full" style={{ zoom: 0.75 }}>
         <QuestionScreen
           // A new key per question gives each one fresh text boxes, so text typed in one
           // question can never show up in another when the selection changes.

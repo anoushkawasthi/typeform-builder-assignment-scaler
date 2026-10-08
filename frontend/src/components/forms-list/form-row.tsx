@@ -126,27 +126,31 @@ export function FormRow(props: FormRowProps) {
   );
 }
 
-/** Grid view: one card. */
+/** Grid view: one card, laid out like Typeform's: title, response count, small icons. */
 export function FormCard(props: FormRowProps) {
   const { form } = props;
 
   return (
-    <li className="flex flex-col rounded-xl border border-admin-border bg-white hover:bg-white/60">
-      <Link href={`/forms/${form.id}/create`} className="flex h-32 items-center justify-center rounded-t-xl bg-[#4B7BB5] p-4">
-        <span className="line-clamp-3 text-center text-[16px] leading-5 text-white">{form.title}</span>
-      </Link>
-      <div className="flex items-center gap-2 p-2 pl-3">
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium text-admin-text">{form.title}</span>
-          <span className="text-[12px] text-admin-muted">
-            {form.response_count === 0
-              ? "No responses"
-              : `${form.response_count} ${form.response_count === 1 ? "response" : "responses"}`}
+    <li className="relative min-h-[148px] rounded-xl bg-white hover:shadow-[0_0_0_1px_var(--color-admin-border)]">
+      <Link href={`/forms/${form.id}/create`} className="block h-full p-4 pr-12">
+        <span className="block truncate text-[16px] leading-6 text-admin-text">{form.title}</span>
+        {form.response_count > 0 && (
+          <span className="mt-1 block text-[13px] text-admin-muted">{form.response_count} responses</span>
+        )}
+        <span className="mt-3 flex items-center gap-2">
+          <span
+            title="Integrations (coming soon)"
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-admin-border text-admin-muted"
+          >
+            <Blocks aria-hidden="true" className="h-3.5 w-3.5" />
           </span>
+          <StatusChip form={form} />
         </span>
-        <StatusChip form={form} />
+      </Link>
+      {/* Outside the link, so opening the menu does not also open the form. */}
+      <span className="absolute right-2 top-3">
         <FormActionsMenu {...props} />
-      </div>
+      </span>
     </li>
   );
 }

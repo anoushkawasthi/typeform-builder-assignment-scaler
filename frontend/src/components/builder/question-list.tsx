@@ -34,7 +34,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, Lightbulb, MoreHorizontal, Plus } from "lucide-react";
+import Link from "next/link";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { QuestionTypeChip } from "@/components/ui/question-type-chip";
@@ -48,6 +49,8 @@ interface QuestionListProps {
   onDuplicate: (question: Question) => void;
   onDelete: (question: Question) => void;
   onAddClick: () => void;
+  /** Address of the Workflow tab, for the branching shortcut under the list. */
+  workflowHref: string;
 }
 
 export function QuestionList({
@@ -58,6 +61,7 @@ export function QuestionList({
   onDuplicate,
   onDelete,
   onAddClick,
+  workflowHref,
 }: QuestionListProps) {
   const sensors = useSensors(
     // A drag only starts after the pointer moves 5px, so a plain click still selects.
@@ -122,6 +126,21 @@ export function QuestionList({
           </button>
         )}
       </div>
+
+      {/* Typeform's shortcut to its logic features. Rules are added per question in the
+          Logic panel on the right; this opens the overview of all of them. */}
+      {questions.length > 1 && (
+        <Link
+          href={workflowHref}
+          className="mx-3 mb-3 flex shrink-0 items-center gap-3 rounded-xl border border-dashed border-admin-border px-3 py-3 text-admin-text hover:bg-admin-hover"
+        >
+          <Lightbulb aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-[13px] leading-[17px]">Personalize with branching</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-admin-border bg-white/80">
+            <ArrowRight aria-hidden="true" className="h-4 w-4" />
+          </span>
+        </Link>
+      )}
     </section>
   );
 }
@@ -179,7 +198,7 @@ function QuestionCard({
       >
         <QuestionTypeChip type={question.type} number={number} />
         <span className="line-clamp-2 flex-1 text-[13px] leading-[17px] text-admin-text">
-          {question.title === "" ? <span className="text-admin-muted">...</span> : question.title}
+          {question.title}
         </span>
       </button>
 

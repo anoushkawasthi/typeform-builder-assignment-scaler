@@ -123,7 +123,8 @@ export function AutosaveText({
       onChange={(event) => handleChange(event.target.value)}
       onBlur={() => saveNow(text)}
       onKeyDown={handleKeyDown}
-      className={`block w-full resize-none overflow-hidden bg-transparent outline-none ${className ?? ""}`}
+      // Like Typeform, the placeholder fades (but stays readable) once the field has focus.
+      className={`block w-full resize-none overflow-hidden bg-transparent outline-none placeholder:transition-opacity focus:placeholder:opacity-50 ${className ?? ""}`}
     />
   );
 }

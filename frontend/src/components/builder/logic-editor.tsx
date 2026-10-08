@@ -110,11 +110,8 @@ export function LogicEditor({ question, allQuestions, onAdd, onReplace, onDelete
         </button>
       </div>
 
-      {question.logic_jumps.length === 0 ? (
-        <p className="mt-2 text-[12px] leading-4 text-admin-muted">
-          No rules. After this question the form continues with the next one.
-        </p>
-      ) : (
+      {/* With no rules the panel is just its title and the + button, as in Typeform. */}
+      {question.logic_jumps.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">
           {question.logic_jumps.map((rule) => (
             <li key={rule.id} className="rounded-lg border border-admin-border-soft bg-white p-2">

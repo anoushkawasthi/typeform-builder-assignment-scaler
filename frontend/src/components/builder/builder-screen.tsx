@@ -140,6 +140,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
             onDuplicate={(question) => void duplicateQuestion(question)}
             onDelete={requestDelete}
             onAddClick={() => setIsAddDialogOpen(true)}
+            workflowHref={`/forms/${form.id}/workflow`}
           />
           <section className="shrink-0 rounded-xl bg-admin-panel p-3">
             <h2 className="px-2 pb-2 pt-1 font-medium text-[#262627]">Endings</h2>
@@ -199,8 +200,9 @@ export function BuilderScreen({ formId }: { formId: number }) {
             {isDesignOpen && <DesignPanel form={form} onUpdate={editor.updateForm} onClose={() => setIsDesignOpen(false)} />}
           </div>
 
-          {/* The work area: the canvas sits in the middle of it, as in Typeform. */}
-          <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto py-4">
+          {/* The work area. The canvas sits a fixed distance below the toolbar, as in
+              Typeform, rather than being centred. */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-4 pt-[min(104px,10vh)]">
             {selectedQuestion === undefined ? (
               <div className="flex h-full flex-col items-center justify-center rounded-xl bg-admin-panel text-center">
                 <h2 className="text-[21px] leading-7 text-admin-text">Add your first question</h2>

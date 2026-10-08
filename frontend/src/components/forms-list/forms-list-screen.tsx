@@ -4,7 +4,8 @@
  * forms-list-screen.tsx — the home page: all of the creator's forms.
  *
  * What it does:   lists forms (as rows or as a grid) with status, response count,
- *                 completion rate and last update; sorts and searches them; creates,
+ *                 completion rate and last update; sorts them; finds one through the
+ *                 Search dialog; creates,
  *                 renames, duplicates and deletes forms. The layout follows Typeform's
  *                 workspace; parts of it that are outside the brief show "coming soon".
  * Depends on:     form-row.tsx, ui/button.tsx, ui/menu.tsx, ui/modal.tsx, lib/api.ts,
@@ -27,6 +28,7 @@ import {
   Search,
   UserPlus,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -85,6 +87,7 @@ export function FormsListScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [formToRename, setFormToRename] = useState<FormListItem | null>(null);
   const [renameText, setRenameText] = useState("");
@@ -140,6 +143,19 @@ export function FormsListScreen() {
     onError: showError,
   });
 
+  function openSearch() {
+    setSearchText("");
+    setIsSearchOpen(true);
+  }
+
+  /** Pressing Enter in the search box opens the first result. */
+  function submitSearch(event: React.FormEvent) {
+    event.preventDefault();
+    if (searchResults.length > 0) {
+      router.push(`/forms/${searchResults[0].id}/create`);
+    }
+  }
+
   function openRename(form: FormListItem) {
     setRenameText(form.title);
     setFormToRename(form);
@@ -167,10 +183,13 @@ export function FormsListScreen() {
   }
 
   const allForms = formsQuery.data ?? [];
-  const matchingForms = allForms.filter((form) => form.title.toLowerCase().includes(searchText.trim().toLowerCase()));
   // Copy before sorting: Array.sort changes the array it is called on, and this one
   // belongs to the query cache.
-  const visibleForms = [...matchingForms].sort(SORT_OPTIONS[sortBy].compare);
+  const visibleForms = [...allForms].sort(SORT_OPTIONS[sortBy].compare);
+
+  // Results for the Search dialog: forms whose title contains what was typed.
+  const search = searchText.trim().toLowerCase();
+  const searchResults = search === "" ? [] : allForms.filter((form) => form.title.toLowerCase().includes(search));
 
   let totalResponses = 0;
   for (const form of allForms) {
@@ -240,16 +259,15 @@ export function FormsListScreen() {
             </div>
 
             <div className="border-b-2 border-white p-4">
-              <label className="flex h-8 items-center gap-2 rounded-lg px-3 text-admin-muted focus-within:bg-admin-hover">
+              {/* As in Typeform, Search is a button that opens a dialog with results. */}
+              <button
+                type="button"
+                onClick={openSearch}
+                className="flex h-8 w-full items-center gap-2 rounded-lg px-3 text-admin-muted hover:bg-admin-hover"
+              >
                 <Search aria-hidden="true" className="h-4 w-4" />
-                <input
-                  value={searchText}
-                  onChange={(event) => setSearchText(event.target.value)}
-                  placeholder="Search"
-                  aria-label="Search forms"
-                  className="w-full bg-transparent text-admin-text outline-none placeholder:text-admin-muted"
-                />
-              </label>
+                Search
+              </button>
             </div>
 
             <div className="flex-1 p-4">
@@ -357,19 +375,48 @@ export function FormsListScreen() {
             )}
 
             {formsQuery.isSuccess && allForms.length > 0 && viewMode === "grid" && (
-              <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {visibleForms.map((form) => (
                   <FormCard key={form.id} {...rowProps(form)} />
                 ))}
               </ul>
             )}
 
-            {formsQuery.isSuccess && allForms.length > 0 && visibleForms.length === 0 && (
-              <p className="mt-8 text-center text-admin-muted">No forms match &quot;{searchText}&quot;.</p>
-            )}
           </main>
         </div>
       </div>
+
+      <Modal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} title="Search">
+        <form onSubmit={submitSearch}>
+          <input
+            autoFocus
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            aria-label="Search forms"
+            className="h-[46px] w-full rounded-lg border border-admin-border bg-white px-3 text-[16px] text-admin-text outline-none focus:border-admin-text focus:shadow-[0_0_0_3px_var(--color-admin-ring)]"
+          />
+        </form>
+        <div className="mt-2 max-h-[240px] min-h-[96px] overflow-y-auto">
+          {search !== "" && (
+            <>
+              <p className="px-3 py-2 text-[13px] font-semibold text-admin-text">Forms</p>
+              {searchResults.length === 0 && <p className="px-3 py-1 text-admin-muted">No forms found</p>}
+              <ul>
+                {searchResults.map((form) => (
+                  <li key={form.id}>
+                    <Link
+                      href={`/forms/${form.id}/create`}
+                      className="block truncate rounded-lg px-3 py-[6px] text-[13px] font-semibold text-admin-text hover:bg-admin-hover"
+                    >
+                      {form.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      </Modal>
 
       <Modal isOpen={formToRename !== null} onClose={() => setFormToRename(null)} title="Rename form">
         <form onSubmit={submitRename}>
