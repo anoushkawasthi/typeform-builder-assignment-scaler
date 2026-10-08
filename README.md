@@ -16,10 +16,10 @@ The demo opens straight into the workspace of a default creator; there is no log
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16 (App Router), TypeScript, Tailwind CSS 4 |
-| Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), Sonner (toasts), Lucide (icons) |
-| Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2 |
+| Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), React Flow (the Workflow chart), qrcode.react (the share QR code), Sonner (toasts), Lucide (icons) |
+| Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2, openpyxl (Excel export) |
 | Database | SQLite |
-| Tests | pytest (35 tests: validation rules, logic jumps and API routes) |
+| Tests | pytest (37 tests: validation rules, logic jumps and API routes) |
 | Hosting | Frontend on Vercel; backend as a systemd service on a VPS behind a Cloudflare Tunnel, SQLite on the server's disk (a Dockerfile and Compose file are included as an alternative) |
 
 ## Features
@@ -38,14 +38,19 @@ navigation (Enter, arrow keys, A/B/C for choices, Y/N, number keys for ratings);
 bar; validation in the browser and again on the server; thank-you screen; no login.
 
 **Results** — starts, submissions and completion rate; a summary card per question
-(counts per choice, yes/no split, rating spread, averages, latest text answers); a table
-of responses; a single response in full; CSV export.
+(counts per choice, yes/no split, rating spread, averages, latest text answers) that can
+be seen as a vertical chart, a horizontal chart or a table, in counts or percentages; a
+table of responses; a single response in full; export of all or of the ticked responses
+as CSV or Excel.
 
 **Logic jumps** — per-question rules such as "if the answer is No, go to question 6" or
-"if the rating is less than 3, end the form"; edited in the builder's Logic panel, shown
-together on the Workflow tab, followed in the form and re-checked on the server.
+"if the rating is less than 3, end the form"; edited in the builder's Logic dialog, drawn
+as a flow chart on the Workflow tab, followed in the form and re-checked on the server.
 
-**Welcome screen** — an optional first screen with a title, text and a Start button.
+**Welcome screen** — an optional first screen with a title, text, a Start button and an
+estimate of how long the form takes.
+
+**Sharing** — the public link, a QR code for it, and a link preview.
 
 **Text formatting** — select text in a title, description or choice in the builder to
 make it bold or italic; stored as plain-text markers (`**bold**`, `*italic*`), never HTML.
@@ -188,11 +193,13 @@ Creator routes:
 | POST | `/api/questions/{id}/choices` | Add a choice |
 | PATCH | `/api/choices/{id}` | Rename a choice |
 | DELETE | `/api/choices/{id}` | Remove a choice |
+| PUT | `/api/questions/{id}/choices/order` | Save a new order of choices |
 | POST | `/api/questions/{id}/logic-jumps` | Add a logic jump |
 | PUT | `/api/logic-jumps/{id}` | Replace a logic jump |
 | DELETE | `/api/logic-jumps/{id}` | Remove a logic jump |
 | GET | `/api/forms/{id}/responses` | Responses table |
-| GET | `/api/forms/{id}/responses.csv` | The same as a CSV download |
+| GET | `/api/forms/{id}/responses.csv` | The same as a CSV download (`?ids=4&ids=9` limits it to those responses) |
+| GET | `/api/forms/{id}/responses.xlsx` | The same table as an Excel workbook |
 | GET | `/api/forms/{id}/summary` | Per-question statistics and completion rate |
 | GET | `/api/responses/{id}` | One response in full |
 
