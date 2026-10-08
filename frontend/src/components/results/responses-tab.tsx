@@ -331,9 +331,8 @@ export function ResponsesTab({ formId, table }: ResponsesTabProps) {
                     </td>
                   ))}
                   <td className={`px-3 group-hover:bg-[#F7F7F8] ${cellPadding} ${CELL_BORDERS}`}>
-                    {/* A form has one ending, which Typeform letters "A". (`?? ""`: an API
-                        that has not been updated yet does not send the title.) */}
-                    <Tag text={`A. ${table.ending_title ?? ""}`} />
+                    {/* A form has one ending, which Typeform letters "A". */}
+                    <Tag text={`A. ${table.ending_title}`} />
                   </td>
                   <td aria-hidden="true" />
                 </tr>
