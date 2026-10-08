@@ -127,10 +127,30 @@ export function reorderQuestions(formId: number, questionIds: number[]) {
   });
 }
 
+// ---- Choices (creator) -----------------------------------------------------------------
+// One request per choice edited, so two quick edits cannot overwrite each other.
+
+export function createChoice(questionId: number, label: string) {
+  return request<FormDetail>("POST", `/api/questions/${questionId}/choices`, { label });
+}
+
+export function updateChoice(choiceId: number, label: string) {
+  return request<FormDetail>("PATCH", `/api/choices/${choiceId}`, { label });
+}
+
+export function deleteChoice(choiceId: number) {
+  return request<FormDetail>("DELETE", `/api/choices/${choiceId}`);
+}
+
 // ---- Results (creator) -----------------------------------------------------------------
 
 export function getResponses(formId: number) {
   return request<ResponsesTable>("GET", `/api/forms/${formId}/responses`);
+}
+
+/** Address of the CSV download. Used as a plain link, so the browser saves the file. */
+export function responsesCsvUrl(formId: number) {
+  return `${API_URL}/api/forms/${formId}/responses.csv`;
 }
 
 export function getSummary(formId: number) {

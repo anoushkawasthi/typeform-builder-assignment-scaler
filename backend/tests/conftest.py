@@ -47,10 +47,11 @@ def published_form(client):
 
     for question in form["questions"]:
         if question["type"] in ("multiple_choice", "dropdown"):
-            client.patch(
-                f"/api/questions/{question['id']}",
-                json={"choices": [{"label": "Red"}, {"label": "Green"}, {"label": "Blue"}]},
-            )
+            # A new choice question starts with one empty choice: rename it, add two more.
+            first_choice_id = question["choices"][0]["id"]
+            client.patch(f"/api/choices/{first_choice_id}", json={"label": "Red"})
+            client.post(f"/api/questions/{question['id']}/choices", json={"label": "Green"})
+            client.post(f"/api/questions/{question['id']}/choices", json={"label": "Blue"})
         if question["type"] in ("short_text", "email"):
             client.patch(f"/api/questions/{question['id']}", json={"is_required": True})
 

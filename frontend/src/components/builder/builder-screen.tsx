@@ -1,0 +1,236 @@
+"use client";
+
+/**
+ * builder-screen.tsx — the form builder page. Start here when reading the builder.
+ *
+ * What it does:   lays out the three columns (question list, canvas, settings) under the
+ *                 header and toolbar, remembers which question is selected, and connects
+ *                 every panel to `useFormEditor`, which does the saving.
+ * Depends on:     use-form-editor.ts and the other files in components/builder,
+ *                 ui/form-header.tsx.
+ * Depended on by: app/forms/[id]/create/page.tsx.
+ *
+ * This component holds only "which thing is open or selected" state. The form itself
+ * lives in the query cache (see use-form-editor.ts) and each panel is a separate
+ * component that receives what it needs as props.
+ */
+
+import { Palette, Play, Plus, Settings } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { FormHeader } from "@/components/ui/form-header";
+import { Modal, ModalActions } from "@/components/ui/modal";
+import type { Question, QuestionType } from "@/lib/types";
+
+import { AddQuestionDialog } from "./add-question-dialog";
+import { DesignDialog, type DesignTab } from "./design-dialog";
+import { PublishButton } from "./publish-button";
+import { QuestionCanvas } from "./question-canvas";
+import { QuestionList } from "./question-list";
+import { QuestionSettings } from "./question-settings";
+import { useFormEditor } from "./use-form-editor";
+
+export function BuilderScreen({ formId }: { formId: number }) {
+  const editor = useFormEditor(formId);
+  const form = editor.form;
+
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [designTab, setDesignTab] = useState<DesignTab | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
+
+  if (editor.isLoading) {
+    return <p className="p-8 text-admin-muted">Loading form...</p>;
+  }
+  if (form === undefined) {
+    return (
+      <div className="p-8">
+        <p className="text-admin-text">This form could not be found.</p>
+        <Link href="/" className="mt-2 inline-block underline">
+          Back to forms
+        </Link>
+      </div>
+    );
+  }
+
+  const questions = form.questions;
+  // Fall back to the first question when nothing is selected, or when the selected
+  // question no longer exists (for example, it was just deleted).
+  const selectedQuestion = questions.find((question) => question.id === selectedQuestionId) ?? questions[0];
+  const selectedIndex = selectedQuestion === undefined ? -1 : questions.indexOf(selectedQuestion);
+
+  async function handleAddQuestion(type: QuestionType) {
+    setIsAddDialogOpen(false);
+    const existingIds = questions.map((question) => question.id);
+    // New questions go right after the selected one, like in Typeform.
+    const position = selectedIndex === -1 ? undefined : selectedIndex + 1;
+    try {
+      const updatedForm = await editor.addQuestion(type, position);
+      const newQuestion = updatedForm.questions.find((question) => !existingIds.includes(question.id));
+      if (newQuestion !== undefined) {
+        setSelectedQuestionId(newQuestion.id);
+      }
+    } catch {
+      // The editor already showed the error in a toast.
+    }
+  }
+
+  function requestDelete(question: Question) {
+    // Only ask for confirmation when there is something to lose.
+    if (question.answer_count > 0) {
+      setQuestionToDelete(question);
+    } else {
+      void deleteQuestion(question);
+    }
+  }
+
+  async function deleteQuestion(question: Question) {
+    setQuestionToDelete(null);
+    try {
+      await editor.deleteQuestion(question.id);
+      toast.success("Question deleted");
+    } catch {
+      // The editor already showed the error in a toast.
+    }
+  }
+
+  return (
+    <div className="flex h-dvh min-w-[1024px] flex-col">
+      <FormHeader
+        formId={form.id}
+        formTitle={form.title}
+        activeSection="create"
+        onRename={(title) => editor.updateForm({ title })}
+        actions={
+          <>
+            <span className="text-[13px] text-admin-muted" aria-live="polite">
+              {editor.isSaving ? "Saving..." : "Saved"}
+            </span>
+            <PublishButton form={form} editor={editor} />
+          </>
+        }
+      />
+
+      <div className="grid min-h-0 flex-1 grid-cols-[256px_minmax(0,1fr)_256px] gap-4 px-4 pb-4">
+        {/* Left column: the questions, then the ending. */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <QuestionList
+            questions={questions}
+            selectedQuestionId={selectedQuestion?.id ?? null}
+            onSelect={setSelectedQuestionId}
+            onReorder={editor.reorderQuestions}
+            onDelete={requestDelete}
+            onAddClick={() => setIsAddDialogOpen(true)}
+          />
+          <section className="shrink-0 rounded-xl bg-admin-panel p-3">
+            <h2 className="px-2 pb-2 pt-1 font-medium text-[#262627]">Endings</h2>
+            <button
+              type="button"
+              onClick={() => setDesignTab("thank-you")}
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-admin-border-soft bg-white px-2 py-2 text-left hover:bg-admin-hover"
+            >
+              <span className="flex h-6 w-12 shrink-0 items-center justify-center rounded-[6px] bg-[#DEDCDE] text-[12px] text-admin-text">
+                End
+              </span>
+              <span className="line-clamp-2 text-[13px] leading-[17px] text-admin-text">{form.thank_you_title}</span>
+            </button>
+          </section>
+        </div>
+
+        {/* Centre column: toolbar, then the canvas. */}
+        <div className="flex min-h-0 flex-col gap-3">
+          <div className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-admin-panel px-2">
+            <Button variant="primary" onClick={() => setIsAddDialogOpen(true)}>
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Add content
+            </Button>
+            <span className="mx-1 h-4 w-px bg-admin-border" />
+            <Button variant="ghost" onClick={() => setDesignTab("theme")}>
+              <Palette aria-hidden="true" className="h-4 w-4" />
+              Design
+            </Button>
+            <span className="mx-1 h-4 w-px bg-admin-border" />
+            {/* Opens in a new tab so the builder keeps its place. */}
+            <Link
+              href={`/forms/${form.id}/preview`}
+              target="_blank"
+              className="flex h-8 items-center gap-2 rounded-lg px-3 font-medium text-admin-muted hover:bg-admin-hover"
+            >
+              <Play aria-hidden="true" className="h-4 w-4" />
+              Preview
+            </Link>
+            <Button variant="ghost" iconOnly aria-label="Form settings" onClick={() => setDesignTab("thank-you")}>
+              <Settings aria-hidden="true" className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {selectedQuestion === undefined ? (
+              <div className="flex h-full flex-col items-center justify-center rounded-xl bg-admin-panel text-center">
+                <h2 className="text-[21px] leading-7 text-admin-text">Add your first question</h2>
+                <p className="mt-2 text-admin-muted">Pick a question type to start building this form.</p>
+                <Button variant="primary" className="mt-4" onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus aria-hidden="true" className="h-4 w-4" />
+                  Add content
+                </Button>
+              </div>
+            ) : (
+              <QuestionCanvas
+                question={selectedQuestion}
+                number={selectedIndex + 1}
+                theme={form.theme}
+                isLastQuestion={selectedIndex === questions.length - 1}
+                onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
+                onAddChoice={() => editor.addChoice(selectedQuestion.id)}
+                onRenameChoice={editor.renameChoice}
+                onRemoveChoice={editor.deleteChoice}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Right column: settings of the selected question. */}
+        {selectedQuestion === undefined ? (
+          <aside className="rounded-xl bg-admin-panel p-4 text-admin-muted">Question settings appear here.</aside>
+        ) : (
+          <QuestionSettings
+            question={selectedQuestion}
+            onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
+          />
+        )}
+      </div>
+
+      <AddQuestionDialog isOpen={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} onPick={handleAddQuestion} />
+
+      <DesignDialog
+        activeTab={designTab}
+        onTabChange={setDesignTab}
+        onClose={() => setDesignTab(null)}
+        form={form}
+        onUpdate={editor.updateForm}
+      />
+
+      <Modal
+        isOpen={questionToDelete !== null}
+        onClose={() => setQuestionToDelete(null)}
+        title="Delete this question?"
+        description={
+          questionToDelete === null
+            ? undefined
+            : `It has ${questionToDelete.answer_count} ${questionToDelete.answer_count === 1 ? "answer" : "answers"}. ` +
+              `They stay in your results until you publish again, and are then deleted for good.`
+        }
+      >
+        <ModalActions>
+          <Button onClick={() => setQuestionToDelete(null)}>Cancel</Button>
+          <Button variant="danger" onClick={() => questionToDelete !== null && void deleteQuestion(questionToDelete)}>
+            Delete question
+          </Button>
+        </ModalActions>
+      </Modal>
+    </div>
+  );
+}

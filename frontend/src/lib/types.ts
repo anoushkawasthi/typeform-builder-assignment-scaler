@@ -26,12 +26,6 @@ export interface Choice {
   label: string;
 }
 
-/** A choice being edited in the builder. A choice that was just added has no id yet. */
-export interface ChoiceInput {
-  id?: number;
-  label: string;
-}
-
 export interface Theme {
   background_color: string;
   question_color: string;
@@ -113,7 +107,6 @@ export interface QuestionUpdate {
   is_required?: boolean;
   allow_multiple?: boolean;
   rating_max?: number;
-  choices?: ChoiceInput[];
 }
 
 /** What the respondent flow needs. The public API and the builder preview both produce it. */

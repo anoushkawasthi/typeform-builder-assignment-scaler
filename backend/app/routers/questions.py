@@ -1,8 +1,8 @@
 """
 routers/questions.py — creator-side routes for the questions of a form.
 
-What it does:   add, edit, reorder and delete questions, including the choices of
-                multiple-choice and dropdown questions.
+What it does:   add, edit, reorder and delete questions, and add, rename and remove
+                the choices of multiple-choice and dropdown questions.
 Depends on:     auth.py, database.py, models.py, schemas.py, presenters.py,
                 services/snapshot.py, routers/forms.py (get_form_or_404).
 Depended on by: main.py (registers the router).
@@ -42,41 +42,6 @@ def renumber_positions(questions: list[Question]) -> None:
     """Give the questions positions 0, 1, 2, ... in the order of the list."""
     for position, question in enumerate(questions):
         question.position = position
-
-
-def sync_choices(db: Session, form: Form, question: Question, incoming: list[schemas.ChoiceIn]) -> None:
-    """
-    Make the question's choices match the list the builder sent.
-
-    The builder always sends the complete ordered list, so three things can happen:
-      - a choice with a known id  -> update its label and position
-      - a choice without an id    -> it is new, create it
-      - an existing choice that is missing from the list -> the creator removed it
-    A removed choice that respondents can still pick (it is in the published snapshot)
-    is only soft-deleted, for the same reason as questions; see services/snapshot.py.
-    """
-    existing_by_id: dict[int, QuestionChoice] = {}
-    for choice in question.choices:
-        if choice.deleted_at is None:
-            existing_by_id[choice.id] = choice
-
-    kept_ids: list[int] = []
-    for position, incoming_choice in enumerate(incoming):
-        if incoming_choice.id is not None and incoming_choice.id in existing_by_id:
-            choice = existing_by_id[incoming_choice.id]
-            choice.label = incoming_choice.label
-            choice.position = position
-            kept_ids.append(choice.id)
-        else:
-            question.choices.append(QuestionChoice(label=incoming_choice.label, position=position))
-
-    for choice_id, choice in existing_by_id.items():
-        if choice_id in kept_ids:
-            continue
-        if snapshot.is_choice_in_snapshot(form, choice_id):
-            choice.deleted_at = utc_now()
-        else:
-            db.delete(choice)
 
 
 @router.post(
@@ -145,9 +110,6 @@ def update_question(
         if new_value is not None:
             setattr(question, field_name, new_value)
 
-    if body.choices is not None:
-        sync_choices(db, form, question, body.choices)
-
     snapshot.touch_form(form)
     db.commit()
     db.refresh(form)
@@ -210,6 +172,105 @@ def reorder_questions(
     question_by_id = {question.id: question for question in current}
     reordered = [question_by_id[question_id] for question_id in body.question_ids]
     renumber_positions(reordered)
+
+    snapshot.touch_form(form)
+    db.commit()
+    db.refresh(form)
+    return presenters.present_form_detail(db, form)
+
+
+# ----------------------------------------------------------------------------------------
+# Choices
+#
+# Each choice is edited on its own (add one, rename one, remove one) rather than by
+# sending the whole list. That way two edits made close together cannot overwrite each
+# other: renaming choice A never carries a stale copy of choice B's label.
+# ----------------------------------------------------------------------------------------
+
+
+def get_choice_or_404(db: Session, choice_id: int, creator: Creator) -> QuestionChoice:
+    """Load a choice only if its form belongs to this creator and it is not deleted."""
+    choice = db.scalar(
+        select(QuestionChoice)
+        .join(Question, QuestionChoice.question_id == Question.id)
+        .join(Form, Question.form_id == Form.id)
+        .where(
+            QuestionChoice.id == choice_id,
+            Form.creator_id == creator.id,
+            QuestionChoice.deleted_at.is_(None),
+            Question.deleted_at.is_(None),
+        )
+    )
+    if choice is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Choice not found")
+    return choice
+
+
+@router.post(
+    "/questions/{question_id}/choices",
+    response_model=schemas.FormDetailOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_choice(
+    question_id: int,
+    body: schemas.ChoiceCreate,
+    db: Session = Depends(get_db),
+    creator: Creator = Depends(get_current_creator),
+):
+    """Add a choice to the end of a question's list."""
+    question = get_question_or_404(db, question_id, creator)
+    form = question.form
+
+    # One past the highest position in use. Soft-deleted choices are counted too, so a
+    # new choice never shares a position with one that is waiting to be purged.
+    next_position = 0
+    for existing in question.choices:
+        if existing.position >= next_position:
+            next_position = existing.position + 1
+
+    question.choices.append(QuestionChoice(label=body.label, position=next_position))
+    snapshot.touch_form(form)
+    db.commit()
+    db.refresh(form)
+    return presenters.present_form_detail(db, form)
+
+
+@router.patch("/choices/{choice_id}", response_model=schemas.FormDetailOut)
+def update_choice(
+    choice_id: int,
+    body: schemas.ChoiceUpdate,
+    db: Session = Depends(get_db),
+    creator: Creator = Depends(get_current_creator),
+):
+    """Rename a choice."""
+    choice = get_choice_or_404(db, choice_id, creator)
+    form = choice.question.form
+
+    choice.label = body.label
+    snapshot.touch_form(form)
+    db.commit()
+    db.refresh(form)
+    return presenters.present_form_detail(db, form)
+
+
+@router.delete("/choices/{choice_id}", response_model=schemas.FormDetailOut)
+def delete_choice(
+    choice_id: int,
+    db: Session = Depends(get_db),
+    creator: Creator = Depends(get_current_creator),
+):
+    """
+    Remove a choice from the draft. Same rule as deleting a question: if respondents can
+    still pick it (it is in the published snapshot) it is only marked deleted until the
+    next publish; otherwise it is deleted straight away.
+    """
+    choice = get_choice_or_404(db, choice_id, creator)
+    form = choice.question.form
+
+    if snapshot.is_choice_in_snapshot(form, choice.id):
+        choice.deleted_at = utc_now()
+    else:
+        db.delete(choice)
 
     snapshot.touch_form(form)
     db.commit()

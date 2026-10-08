@@ -38,11 +38,12 @@ class ChoiceOut(BaseModel):
     label: str
 
 
-class ChoiceIn(BaseModel):
-    """A choice sent by the builder. `id` is missing for a choice that was just added."""
-
-    id: int | None = None
+class ChoiceCreate(BaseModel):
     label: str = Field(default="", max_length=255)
+
+
+class ChoiceUpdate(BaseModel):
+    label: str = Field(max_length=255)
 
 
 class QuestionOut(BaseModel):
@@ -75,8 +76,6 @@ class QuestionUpdate(BaseModel):
     is_required: bool | None = None
     allow_multiple: bool | None = None
     rating_max: int | None = Field(default=None, ge=1, le=10)
-    # When present, this is the complete ordered list of choices for the question.
-    choices: list[ChoiceIn] | None = None
 
 
 class QuestionOrderIn(BaseModel):

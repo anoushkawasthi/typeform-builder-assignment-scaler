@@ -162,3 +162,36 @@ def test_type_of_an_answered_question_is_locked(client, published_form):
     submit(client, published_form, valid_answers(published_form))
     response = client.patch(f"/api/questions/{short_text['id']}", json={"type": "long_text"})
     assert response.status_code == 409
+
+
+def test_deleting_a_picked_choice_waits_for_publish(client, published_form):
+    form_id = published_form["form_id"]
+    multiple_choice = published_form["questions_by_type"]["multiple_choice"]
+    green = multiple_choice["choices"][1]
+    submit(client, published_form, valid_answers(published_form))
+
+    draft = client.delete(f"/api/choices/{green['id']}").json()
+    draft_question = [question for question in draft["questions"] if question["id"] == multiple_choice["id"]][0]
+    assert [choice["label"] for choice in draft_question["choices"]] == ["Red", "Blue"]
+    assert draft["answers_lost_on_publish"] == 1
+
+    # The live form still offers Green, and the stored pick is still shown.
+    live = client.get(f"/api/public/forms/{published_form['public_id']}").json()
+    live_question = [question for question in live["questions"] if question["id"] == multiple_choice["id"]][0]
+    assert [choice["label"] for choice in live_question["choices"]] == ["Red", "Green", "Blue"]
+
+    client.post(f"/api/forms/{form_id}/publish")
+    summary = client.get(f"/api/forms/{form_id}/summary").json()
+    by_type = {question["type"]: question for question in summary["questions"]}
+    assert by_type["multiple_choice"]["buckets"] == [{"label": "Red", "count": 0}, {"label": "Blue", "count": 0}]
+
+
+def test_csv_export_has_a_header_and_one_row_per_response(client, published_form):
+    submit(client, published_form, valid_answers(published_form))
+    response = client.get(f"/api/forms/{published_form['form_id']}/responses.csv")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    lines = response.text.strip().splitlines()
+    assert len(lines) == 2
+    assert lines[0].startswith("Response ID,Started at (UTC),Submitted at (UTC)")
+    assert "Ann" in lines[1] and "ann@example.com" in lines[1] and "Green" in lines[1]

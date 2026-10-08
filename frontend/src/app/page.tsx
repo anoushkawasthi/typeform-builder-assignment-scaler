@@ -1,9 +1,11 @@
-// Temporary placeholder so the first deployment has something to show.
-// Replaced by the form list once the design system is in place.
+/**
+ * / — the home page: the list of forms.
+ *
+ * Route files only hand over to a screen component.
+ */
+
+import { FormsListScreen } from "@/components/forms-list/forms-list-screen";
+
 export default function HomePage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <p>Typeform Replica is being set up.</p>
-    </main>
-  );
+  return <FormsListScreen />;
 }
