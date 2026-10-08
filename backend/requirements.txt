@@ -1,0 +1,12 @@
+# Web framework and server
+fastapi==0.143.0
+uvicorn[standard]==0.54.0
+
+# Database access and request/response validation
+sqlalchemy==2.1.4
+pydantic==2.14.0
+email-validator==2.3.0
+
+# Tests
+pytest==9.1.1
+httpx==0.28.1

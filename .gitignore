@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# SQLite database files (created at runtime, rebuilt by the seed script)
+backend/data/
+*.db
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Local environment files
+.env
+.env.local
+.env*.local
+
+# Editors and OS
+.DS_Store
+.vscode/
+.idea/
+
+# Local research screenshots (copied to the private docs repo)
+.research/
