@@ -15,6 +15,7 @@
 
 import { ArrowRight, Plus, X } from "lucide-react";
 
+import { stripFormatting } from "@/lib/formatted-text";
 import { OPERATORS_BY_QUESTION_TYPE, OPERATOR_LABELS } from "@/lib/logic";
 import type { LogicJump, LogicJumpInput, LogicOperator, Question } from "@/lib/types";
 
@@ -162,7 +163,7 @@ export function LogicEditor({ question, allQuestions, onAdd, onReplace, onDelete
                 >
                   {laterQuestions.map((later) => (
                     <option key={later.id} value={later.id}>
-                      {allQuestions.indexOf(later) + 1}. {later.title === "" ? "..." : later.title}
+                      {allQuestions.indexOf(later) + 1}. {later.title === "" ? "..." : stripFormatting(later.title)}
                     </option>
                   ))}
                   <option value={END_OF_FORM_VALUE}>End of form</option>
@@ -198,7 +199,7 @@ function CompareValueField({ question, rule, onChange }: CompareValueFieldProps)
       >
         {question.choices.map((choice) => (
           <option key={choice.id} value={choice.id}>
-            {choice.label === "" ? "Choice" : choice.label}
+            {choice.label === "" ? "Choice" : stripFormatting(choice.label)}
           </option>
         ))}
       </select>

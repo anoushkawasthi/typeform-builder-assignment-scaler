@@ -15,7 +15,10 @@
  * box keeps its own copy and only accepts an outside value while it is not focused.
  */
 
+import { Bold, Italic } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { toggleMarker } from "@/lib/formatted-text";
 
 interface AutosaveTextProps {
   /** The saved value. */
@@ -31,6 +34,11 @@ interface AutosaveTextProps {
   onEnter?: () => void;
   /** Called when Backspace is pressed in an already-empty field. */
   onBackspaceWhenEmpty?: () => void;
+  /**
+   * Show the B / I pop-up when text is selected. It wraps the selection in **bold** or
+   * *italic* markers (see lib/formatted-text.tsx).
+   */
+  allowFormatting?: boolean;
 }
 
 // Wait this long after the last keystroke before saving, so typing a sentence is one
@@ -47,8 +55,11 @@ export function AutosaveText({
   autoFocus = false,
   onEnter,
   onBackspaceWhenEmpty,
+  allowFormatting = false,
 }: AutosaveTextProps) {
   const [text, setText] = useState(value);
+  // True while some text in this field is selected; shows the B / I pop-up.
+  const [hasSelection, setHasSelection] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveTimerRef = useRef<number | null>(null);
   // The last text we sent (or received), to avoid saving when nothing changed.
@@ -97,6 +108,29 @@ export function AutosaveText({
     saveTimerRef.current = window.setTimeout(() => saveNow(newText), SAVE_DELAY_MS);
   }
 
+  /** Called whenever the selection changes: show the pop-up only for a real selection. */
+  function handleSelect() {
+    const textarea = textareaRef.current;
+    if (allowFormatting && textarea !== null) {
+      setHasSelection(textarea.selectionStart !== textarea.selectionEnd);
+    }
+  }
+
+  function applyFormatting(marker: "**" | "*") {
+    const textarea = textareaRef.current;
+    if (textarea === null) {
+      return;
+    }
+    const result = toggleMarker(text, textarea.selectionStart, textarea.selectionEnd, marker);
+    handleChange(result.text);
+    // React re-renders the box with the new text first; only then can the same words
+    // be selected again, so this waits for the next frame.
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(result.selectionStart, result.selectionEnd);
+    });
+  }
+
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !allowLineBreaks) {
       event.preventDefault();
@@ -113,7 +147,7 @@ export function AutosaveText({
     }
   }
 
-  return (
+  const textarea = (
     <textarea
       ref={textareaRef}
       rows={1}
@@ -121,10 +155,57 @@ export function AutosaveText({
       placeholder={placeholder}
       aria-label={ariaLabel}
       onChange={(event) => handleChange(event.target.value)}
-      onBlur={() => saveNow(text)}
+      onBlur={() => {
+        setHasSelection(false);
+        saveNow(text);
+      }}
+      onSelect={handleSelect}
       onKeyDown={handleKeyDown}
       // Like Typeform, the placeholder fades (but stays readable) once the field has focus.
       className={`block w-full resize-none overflow-hidden bg-transparent outline-none placeholder:transition-opacity focus:placeholder:opacity-50 ${className ?? ""}`}
     />
+  );
+
+  if (!allowFormatting) {
+    return textarea;
+  }
+
+  return (
+    <div className="relative w-full min-w-0 flex-1">
+      {hasSelection && (
+        <div
+          role="toolbar"
+          aria-label="Text formatting"
+          // Undo the form theme's font and any zoom-scaled sizes: this is admin UI.
+          className="absolute -top-11 left-0 z-20 flex gap-1 rounded-lg bg-white p-1 font-admin shadow-[0_2px_12px_rgba(60,50,62,0.18)]"
+        >
+          {/* onMouseDown + preventDefault: a normal click would move focus to the
+              button, which clears the selection before we can use it. */}
+          <button
+            type="button"
+            aria-label="Bold"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              applyFormatting("**");
+            }}
+            className="flex h-8 w-9 items-center justify-center rounded-md text-admin-muted hover:bg-admin-hover"
+          >
+            <Bold className="h-4 w-4" strokeWidth={3} />
+          </button>
+          <button
+            type="button"
+            aria-label="Italic"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              applyFormatting("*");
+            }}
+            className="flex h-8 w-9 items-center justify-center rounded-md text-admin-muted hover:bg-admin-hover"
+          >
+            <Italic className="h-4 w-4" strokeWidth={3} />
+          </button>
+        </div>
+      )}
+      {textarea}
+    </div>
   );
 }

@@ -19,7 +19,7 @@ The demo opens straight into the workspace of a default creator; there is no log
 | Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), Sonner (toasts), Lucide (icons) |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2 |
 | Database | SQLite |
-| Tests | pytest (32 tests: validation rules, logic jumps and API routes) |
+| Tests | pytest (33 tests: validation rules, logic jumps and API routes) |
 | Hosting | Frontend on Vercel; backend as a systemd service on a VPS behind a Cloudflare Tunnel, SQLite on the server's disk (a Dockerfile and Compose file are included as an alternative) |
 
 ## Features
@@ -44,6 +44,9 @@ of responses; a single response in full; CSV export.
 **Logic jumps** — per-question rules such as "if the answer is No, go to question 6" or
 "if the rating is less than 3, end the form"; edited in the builder's Logic panel, shown
 together on the Workflow tab, followed in the form and re-checked on the server.
+
+**Text formatting** — select text in a title, description or choice in the builder to
+make it bold or italic; stored as plain-text markers (`**bold**`, `*italic*`), never HTML.
 
 **Also** — themes (presets, custom colours, font) and an editable thank-you screen;
 toasts, modals and confirmation before anything destructive.

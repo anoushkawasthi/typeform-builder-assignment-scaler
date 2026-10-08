@@ -16,6 +16,7 @@ import Link from "next/link";
 
 import { ComingSoonBadge } from "@/components/ui/coming-soon";
 import { FormHeader } from "@/components/ui/form-header";
+import { stripFormatting } from "@/lib/formatted-text";
 import { QuestionTypeChip } from "@/components/ui/question-type-chip";
 import { OPERATOR_LABELS } from "@/lib/logic";
 import type { LogicJump, Question } from "@/lib/types";
@@ -30,7 +31,7 @@ function describeCondition(question: Question, rule: LogicJump): string {
   let comparedWith = "";
   if (rule.compare_choice_id !== null) {
     const choice = question.choices.find((candidate) => candidate.id === rule.compare_choice_id);
-    comparedWith = `"${choice?.label ?? "a removed choice"}"`;
+    comparedWith = `"${choice === undefined ? "a removed choice" : stripFormatting(choice.label)}"`;
   } else if (rule.compare_boolean !== null) {
     comparedWith = rule.compare_boolean ? "Yes" : "No";
   } else if (rule.compare_number !== null) {
@@ -48,7 +49,7 @@ function describeTarget(questions: Question[], rule: LogicJump): string {
   if (index === -1) {
     return "a removed question";
   }
-  const title = questions[index].title === "" ? "..." : questions[index].title;
+  const title = questions[index].title === "" ? "..." : stripFormatting(questions[index].title);
   return `${index + 1}. ${title}`;
 }
 
@@ -89,7 +90,7 @@ export function WorkflowScreen({ formId }: { formId: number }) {
               <li key={question.id} className="rounded-xl bg-white p-4">
                 <div className="flex items-start gap-3">
                   <QuestionTypeChip type={question.type} number={index + 1} />
-                  <p className="font-medium text-admin-text">{question.title === "" ? "..." : question.title}</p>
+                  <p className="font-medium text-admin-text">{question.title === "" ? "..." : stripFormatting(question.title)}</p>
                 </div>
 
                 {question.logic_jumps.length === 0 ? (

@@ -60,6 +60,7 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove }: ChoiceEdito
               onSave={(label) => onRename(choice.id, label)}
               placeholder="Choice"
               ariaLabel={`Choice ${letterForIndex(index)}`}
+              allowFormatting
               autoFocus={focusFromIndex !== null && index >= focusFromIndex}
               // Enter adds the next choice, so a list can be typed without the mouse.
               onEnter={addChoice}

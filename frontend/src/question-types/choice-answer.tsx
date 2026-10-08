@@ -13,6 +13,7 @@
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { FormattedText } from "@/lib/formatted-text";
 import type { Choice } from "@/lib/types";
 
 import type { QuestionAnswerProps } from "./question-answer";
@@ -156,7 +157,7 @@ export function ChoiceAnswer({
                 {keyForIndex(index)}
               </span>
               <span className="flex-1 px-1 text-[18px] leading-[24px] text-form-answer">
-                {choice.label === "" ? "Choice" : choice.label}
+                {choice.label === "" ? "Choice" : <FormattedText text={choice.label} />}
               </span>
               {/* The tick keeps its space when hidden so boxes do not change width on select. */}
               <Check

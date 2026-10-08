@@ -12,6 +12,7 @@
  */
 
 import { QuestionTypeChip } from "@/components/ui/question-type-chip";
+import { stripFormatting } from "@/lib/formatted-text";
 import type { FormSummary, QuestionSummary } from "@/lib/types";
 
 import { BarChart } from "./bar-chart";
@@ -62,7 +63,7 @@ function QuestionCard({ question, number, submittedCount }: QuestionCardProps) {
       <div className="flex items-start gap-3">
         <QuestionTypeChip type={question.type} number={number} />
         <div>
-          <h2 className="font-medium text-admin-text">{question.title === "" ? "..." : question.title}</h2>
+          <h2 className="font-medium text-admin-text">{question.title === "" ? "..." : stripFormatting(question.title)}</h2>
           <p className="mt-2 text-admin-muted">
             {question.answer_count} out of {submittedCount} people answered this question.
           </p>

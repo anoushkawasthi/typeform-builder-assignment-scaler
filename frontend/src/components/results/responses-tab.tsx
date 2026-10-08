@@ -16,6 +16,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { IconTile, QuestionTypeChip, QuestionTypeIcon } from "@/components/ui/question-type-chip";
 import { responsesCsvUrl } from "@/lib/api";
+import { stripFormatting } from "@/lib/formatted-text";
 import type { AnswerOut, ResponseOut, ResponsesTable } from "@/lib/types";
 
 interface ResponsesTabProps {
@@ -130,7 +131,7 @@ export function ResponsesTab({ formId, table }: ResponsesTabProps) {
                   >
                     <span className="flex items-center gap-3 text-[13px] text-admin-text">
                       <QuestionTypeIcon type={question.type} />
-                      <span className="line-clamp-2">{question.title === "" ? "..." : question.title}</span>
+                      <span className="line-clamp-2">{question.title === "" ? "..." : stripFormatting(question.title)}</span>
                     </span>
                   </th>
                 ))}
@@ -191,7 +192,7 @@ export function ResponsesTab({ formId, table }: ResponsesTabProps) {
               <li key={question.id} className="rounded-xl bg-white p-4">
                 <div className="flex items-start gap-3">
                   <QuestionTypeChip type={question.type} number={index + 1} />
-                  <p className="font-medium text-admin-text">{question.title === "" ? "..." : question.title}</p>
+                  <p className="font-medium text-admin-text">{question.title === "" ? "..." : stripFormatting(question.title)}</p>
                 </div>
                 <div className="mt-2 whitespace-pre-line pl-[60px] text-admin-text">
                   <AnswerCell answer={findAnswer(openResponse, question.id)} />

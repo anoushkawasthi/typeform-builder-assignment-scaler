@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.models import Answer, Form, Question, Response
 from app.services import snapshot
+from app.services.text import strip_formatting
 
 
 def count_submitted_responses(db: Session, form_id: int) -> int:
@@ -153,7 +154,8 @@ def present_answer(answer: Answer, choice_labels_by_id: dict[int, str]) -> schem
         label = choice_labels_by_id.get(selected.choice_id)
         if label is None:
             label = selected.choice.label
-        choice_labels.append(label)
+        # Results show plain text: drop any bold / italic markers.
+        choice_labels.append(strip_formatting(label))
 
     if answer.value_text is not None:
         display = answer.value_text

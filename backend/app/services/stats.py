@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app import schemas
 from app.models import Answer, AnswerChoice, Form, Response
 from app.services import snapshot
+from app.services.text import strip_formatting
 
 RECENT_TEXTS_LIMIT = 5
 
@@ -54,7 +55,9 @@ def choice_buckets(db: Session, question: dict) -> list[schemas.BucketOut]:
 
     buckets = []
     for choice in question["choices"]:
-        buckets.append(schemas.BucketOut(label=choice["label"], count=count_by_choice_id.get(choice["id"], 0)))
+        buckets.append(
+            schemas.BucketOut(label=strip_formatting(choice["label"]), count=count_by_choice_id.get(choice["id"], 0))
+        )
     return buckets
 
 

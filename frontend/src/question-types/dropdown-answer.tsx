@@ -13,6 +13,7 @@
 import { ChevronDown, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { FormattedText, stripFormatting } from "@/lib/formatted-text";
 import type { Choice } from "@/lib/types";
 
 import type { QuestionAnswerProps } from "./question-answer";
@@ -29,7 +30,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
 
   // Case-insensitive "contains" filter on what has been typed.
   const visibleChoices = question.choices.filter((choice) =>
-    choice.label.toLowerCase().includes(searchText.trim().toLowerCase()),
+    stripFormatting(choice.label).toLowerCase().includes(searchText.trim().toLowerCase()),
   );
 
   useEffect(() => {
@@ -84,7 +85,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
           aria-expanded={isOpen}
           aria-controls={`dropdown-options-${question.id}`}
           // Once something is picked the field shows it; typing starts a new search.
-          value={selectedChoice && searchText === "" ? selectedChoice.label : searchText}
+          value={selectedChoice && searchText === "" ? stripFormatting(selectedChoice.label) : searchText}
           placeholder="Type or select an option"
           readOnly={!isInteractive}
           tabIndex={isInteractive && isActive ? 0 : -1}
@@ -138,7 +139,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
                 (index === highlightedIndex ? "bg-form-answer-10" : "bg-form-answer-6")
               }
             >
-              {choice.label === "" ? "Choice" : choice.label}
+              {choice.label === "" ? "Choice" : <FormattedText text={choice.label} />}
             </li>
           ))}
         </ul>

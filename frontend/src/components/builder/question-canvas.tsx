@@ -74,6 +74,7 @@ export function QuestionCanvas({
               onSave={(title) => onUpdate({ title })}
               placeholder="Your question here."
               ariaLabel="Question title"
+              allowFormatting
               className="text-form-question placeholder:italic placeholder:text-form-question-80"
             />
           }
@@ -84,6 +85,7 @@ export function QuestionCanvas({
               placeholder="Description (optional)"
               ariaLabel="Question description"
               allowLineBreaks
+              allowFormatting
               className="mt-2 text-[16px] leading-[24px] text-form-question-80 placeholder:italic sm:text-[18px]"
             />
           }

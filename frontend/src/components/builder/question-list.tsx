@@ -39,6 +39,7 @@ import Link from "next/link";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { QuestionTypeChip } from "@/components/ui/question-type-chip";
+import { stripFormatting } from "@/lib/formatted-text";
 import type { Question } from "@/lib/types";
 
 interface QuestionListProps {
@@ -92,7 +93,7 @@ export function QuestionList({
     <section className="flex min-h-0 flex-1 flex-col rounded-xl bg-admin-panel">
       <h2 className="px-5 pb-3 pt-5 font-medium text-[#262627]">Questions</h2>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden px-3 pb-3">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={questions.map((question) => question.id)} strategy={verticalListSortingStrategy}>
             {questions.map((question, index) => (
@@ -177,7 +178,10 @@ function QuestionCard({
   return (
     <div
       ref={setNodeRef}
-      style={{ transform: CSS.Translate.toString(transform), transition }}
+      // The list is one column, so a dragged card may only move up and down: its
+      // sideways offset is forced to 0. Without this, dragging to the right pushed the
+      // card out of the panel and made the list scroll sideways.
+      style={{ transform: CSS.Translate.toString(transform === null ? null : { ...transform, x: 0 }), transition }}
       className={
         "group relative shrink-0 rounded-xl border border-admin-border-soft bg-white p-1 " +
         // The card being dragged floats above the others with a shadow.
@@ -198,7 +202,7 @@ function QuestionCard({
       >
         <QuestionTypeChip type={question.type} number={number} />
         <span className="line-clamp-2 flex-1 text-[13px] leading-[17px] text-admin-text">
-          {question.title}
+          {stripFormatting(question.title)}
         </span>
       </button>
 

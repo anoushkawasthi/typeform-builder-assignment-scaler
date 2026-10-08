@@ -25,6 +25,7 @@ from app.database import get_db
 from app.models import Answer, Creator, Form, Response
 from app.routers.forms import get_form_or_404
 from app.services import snapshot, stats
+from app.services.text import strip_formatting
 
 router = APIRouter(prefix="/api", tags=["responses"])
 
@@ -72,7 +73,10 @@ def export_responses_csv(form_id: int, db: Session = Depends(get_db), creator: C
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["Response ID", "Started at (UTC)", "Submitted at (UTC)"] + [question["title"] for question in questions])
+    writer.writerow(
+        ["Response ID", "Started at (UTC)", "Submitted at (UTC)"]
+        + [strip_formatting(question["title"]) for question in questions]
+    )
 
     for response in responses:
         presented = presenters.present_response(response, form)

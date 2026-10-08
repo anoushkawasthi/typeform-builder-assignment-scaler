@@ -148,3 +148,12 @@ def test_a_jump_that_points_backwards_is_ignored():
     assert logic.next_question_index(questions, 1, None, None, []) == 2
     # From the last question the form ends.
     assert logic.next_question_index(questions, 2, None, None, []) == logic.END_OF_FORM
+
+
+def test_strip_formatting_removes_bold_and_italic_markers():
+    from app.services.text import strip_formatting
+
+    assert strip_formatting("Pick your **favourite** *fruit*") == "Pick your favourite fruit"
+    # A lone asterisk is ordinary text and is kept.
+    assert strip_formatting("5 * 3") == "5 * 3"
+    assert strip_formatting("plain") == "plain"

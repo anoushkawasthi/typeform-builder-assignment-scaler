@@ -16,6 +16,7 @@
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { FormattedText } from "@/lib/formatted-text";
 import type { AnswerValue, RenderableQuestion } from "@/lib/types";
 import { QuestionAnswer } from "@/question-types/question-answer";
 
@@ -80,7 +81,7 @@ export function QuestionScreen({
       >
         {titleContent ?? (
           <>
-            {question.title === "" ? "..." : question.title}
+            {question.title === "" ? "..." : <FormattedText text={question.title} />}
             {question.is_required && <span aria-label="required"> *</span>}
           </>
         )}
@@ -89,7 +90,7 @@ export function QuestionScreen({
       {descriptionContent ??
         (question.description !== "" && (
           <p className="mt-2 whitespace-pre-line text-[16px] leading-[24px] text-form-question-80 sm:text-[18px]">
-            {question.description}
+            <FormattedText text={question.description} />
           </p>
         ))}
 
