@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * logic-editor.tsx — the Logic section of the builder's settings panel.
+ * logic-editor.tsx — the list of branching rules for one question.
  *
- * What it does:   lists the selected question's logic jumps and lets the creator add,
- *                 change and remove them. Each rule reads as a sentence:
+ * What it does:   lists a question's logic jumps and lets the creator add, change and
+ *                 remove them. Each rule reads as a sentence:
  *                 "If answer [is] [Yes]  →  go to [5. Which company...]".
  * Depends on:     lib/logic.ts (which operators each type allows), lib/types.ts.
- * Depended on by: question-settings.tsx.
+ * Depended on by: logic-dialog.tsx (inside its Branching section).
  *
  * Every change sends the complete rule to the server (a PUT), which checks it and
  * returns the form. There is no separate "save" step.
@@ -97,25 +97,17 @@ export function LogicEditor({ question, allQuestions, onAdd, onReplace, onDelete
   }
 
   return (
-    <section className="rounded-xl bg-admin-panel p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-medium text-admin-text">Logic</h2>
-        <button
-          type="button"
-          onClick={handleAdd}
-          aria-label="Add a logic jump"
-          title="Add a logic jump"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-border bg-white/80 text-admin-muted hover:bg-admin-hover"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
+    <div>
+      {question.logic_jumps.length === 0 && (
+        <p className="text-admin-muted">
+          No rules yet. After this question the form continues with the next one.
+        </p>
+      )}
 
-      {/* With no rules the panel is just its title and the + button, as in Typeform. */}
       {question.logic_jumps.length > 0 && (
-        <ul className="mt-3 flex flex-col gap-2">
+        <ul className="flex flex-col gap-2">
           {question.logic_jumps.map((rule) => (
-            <li key={rule.id} className="rounded-lg border border-admin-border-soft bg-white p-2">
+            <li key={rule.id} className="rounded-lg border border-admin-border bg-admin-panel p-3">
               <div className="flex items-center gap-1">
                 <span className="shrink-0 text-[12px] text-admin-muted">
                   {rule.operator === "always" ? "Then" : "If answer"}
@@ -177,7 +169,16 @@ export function LogicEditor({ question, allQuestions, onAdd, onReplace, onDelete
       {question.logic_jumps.length > 1 && (
         <p className="mt-2 text-[12px] leading-4 text-admin-muted">Rules are checked top to bottom; the first match wins.</p>
       )}
-    </section>
+
+      <button
+        type="button"
+        onClick={handleAdd}
+        className="mt-3 flex h-8 items-center gap-2 rounded-lg border border-admin-border bg-white/80 px-3 font-medium text-admin-muted hover:bg-admin-hover"
+      >
+        <Plus aria-hidden="true" className="h-4 w-4" />
+        Add rule
+      </button>
+    </div>
   );
 }
 

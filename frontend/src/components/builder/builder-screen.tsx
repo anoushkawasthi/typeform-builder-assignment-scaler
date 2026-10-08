@@ -28,6 +28,7 @@ import type { Question, QuestionType } from "@/lib/types";
 import { AddQuestionDialog } from "./add-question-dialog";
 import { DesignPanel } from "./design-panel";
 import { EndingDialog } from "./ending-dialog";
+import { LogicDialog } from "./logic-dialog";
 import { PreviewOverlay } from "./preview-overlay";
 import { PublishButton } from "./publish-button";
 import { QuestionCanvas } from "./question-canvas";
@@ -44,6 +45,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [isEndingOpen, setIsEndingOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isLogicOpen, setIsLogicOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
 
   if (editor.isLoading) {
@@ -142,7 +144,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
             onDuplicate={(question) => void duplicateQuestion(question)}
             onDelete={requestDelete}
             onAddClick={() => setIsAddDialogOpen(true)}
-            workflowHref={`/forms/${form.id}/workflow`}
+            onOpenLogic={() => setIsLogicOpen(true)}
           />
           <section className="shrink-0 rounded-xl bg-admin-panel p-3">
             <h2 className="px-2 pb-2 pt-1 font-medium text-[#262627]">Endings</h2>
@@ -236,16 +238,22 @@ export function BuilderScreen({ formId }: { formId: number }) {
         ) : (
           <QuestionSettings
             question={selectedQuestion}
-            allQuestions={questions}
             onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
-            onAddLogicJump={(rule) => editor.addLogicJump(selectedQuestion.id, rule)}
-            onReplaceLogicJump={editor.replaceLogicJump}
-            onDeleteLogicJump={editor.deleteLogicJump}
+            onOpenLogic={() => setIsLogicOpen(true)}
           />
         )}
       </div>
 
       <AddQuestionDialog isOpen={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} onPick={handleAddQuestion} />
+
+      {isLogicOpen && selectedQuestion !== undefined && (
+        <LogicDialog
+          questions={questions}
+          initialQuestionId={selectedQuestion.id}
+          editor={editor}
+          onClose={() => setIsLogicOpen(false)}
+        />
+      )}
 
       {isPreviewOpen && <PreviewOverlay form={form} onClose={() => setIsPreviewOpen(false)} />}
 

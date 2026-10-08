@@ -5,42 +5,30 @@
  *
  * What it does:   the question-type picker, the Required toggle, the settings that
  *                 only some types have (multiple selection, number of stars), and the
- *                 logic jumps.
- * Depends on:     logic-editor.tsx, ui/toggle.tsx, ui/menu.tsx,
+ *                 button that opens the Logic dialog.
+ * Depends on:     ui/toggle.tsx, ui/menu.tsx,
  *                 ui/question-type-chip.tsx, lib/question-types.ts.
  * Depended on by: builder-screen.tsx.
  */
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { QuestionTypeIcon } from "@/components/ui/question-type-chip";
 import { Toggle } from "@/components/ui/toggle";
 import { QUESTION_TYPES } from "@/lib/question-types";
-import type { LogicJumpInput, Question, QuestionType, QuestionUpdate } from "@/lib/types";
-
-import { LogicEditor } from "./logic-editor";
+import type { Question, QuestionType, QuestionUpdate } from "@/lib/types";
 
 interface QuestionSettingsProps {
   question: Question;
-  /** Every question of the form, in order; the logic editor needs them for "go to". */
-  allQuestions: Question[];
   onUpdate: (changes: QuestionUpdate) => void;
-  onAddLogicJump: (rule: LogicJumpInput) => void;
-  onReplaceLogicJump: (logicJumpId: number, rule: LogicJumpInput) => void;
-  onDeleteLogicJump: (logicJumpId: number) => void;
+  /** Open the Logic dialog on this question. */
+  onOpenLogic: () => void;
 }
 
 const RATING_STEP_OPTIONS = [3, 4, 5, 6, 7, 8, 9, 10];
 
-export function QuestionSettings({
-  question,
-  allQuestions,
-  onUpdate,
-  onAddLogicJump,
-  onReplaceLogicJump,
-  onDeleteLogicJump,
-}: QuestionSettingsProps) {
+export function QuestionSettings({ question, onUpdate, onOpenLogic }: QuestionSettingsProps) {
   // The server refuses to change the type of a question that has answers (they are
   // stored per type), so the picker is locked up front with an explanation.
   const isTypeLocked = question.answer_count > 0;
@@ -115,13 +103,26 @@ export function QuestionSettings({
         </div>
       </section>
 
-      <LogicEditor
-        question={question}
-        allQuestions={allQuestions}
-        onAdd={onAddLogicJump}
-        onReplace={onReplaceLogicJump}
-        onDelete={onDeleteLogicJump}
-      />
+      {/* Like Typeform, the panel only opens the Logic dialog; rules are edited there. */}
+      <section className="rounded-xl bg-admin-panel p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-medium text-admin-text">Logic</h2>
+          <button
+            type="button"
+            onClick={onOpenLogic}
+            aria-label="Open logic"
+            title="Add or edit logic"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-border bg-white/80 text-admin-muted hover:bg-admin-hover"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </div>
+        {question.logic_jumps.length > 0 && (
+          <button type="button" onClick={onOpenLogic} className="mt-2 text-[13px] text-admin-muted underline underline-offset-2">
+            {question.logic_jumps.length} branching {question.logic_jumps.length === 1 ? "rule" : "rules"}
+          </button>
+        )}
+      </section>
     </aside>
   );
 }

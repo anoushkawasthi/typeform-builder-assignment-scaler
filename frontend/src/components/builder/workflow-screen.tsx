@@ -82,7 +82,7 @@ export function WorkflowScreen({ formId }: { formId: number }) {
             <Link href={`/forms/${formId}/create`} className="underline">
               Edit rules in the builder
             </Link>
-            , under Logic.
+            , with the + beside Logic.
           </p>
 
           <ol className="mt-6 flex flex-col gap-2">
