@@ -15,17 +15,20 @@ interface MenuProps {
   /** The element that opens the menu when clicked. Must be a single button. */
   trigger: ReactNode;
   align?: "start" | "end";
+  /** Which side of the trigger the menu opens on. Defaults to below it. */
+  side?: "bottom" | "right";
   children: ReactNode;
 }
 
-export function Menu({ trigger, align = "end", children }: MenuProps) {
+export function Menu({ trigger, align = "end", side = "bottom", children }: MenuProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           align={align}
-          sideOffset={4}
+          side={side}
+          sideOffset={side === "right" ? 12 : 4}
           // Typeform's menus have a thin border and a soft 3px ring instead of a drop shadow.
           className="z-50 min-w-[202px] rounded-xl border border-admin-border bg-white p-2 shadow-[0_0_0_3px_var(--color-admin-ring)]"
         >

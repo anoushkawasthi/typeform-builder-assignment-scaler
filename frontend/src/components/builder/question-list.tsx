@@ -34,7 +34,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ArrowRight, Lightbulb, MoreHorizontal, Plus } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, CopyPlus, Lightbulb, MoreVertical, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
@@ -183,7 +183,8 @@ function QuestionCard({
       // card out of the panel and made the list scroll sideways.
       style={{ transform: CSS.Translate.toString(transform === null ? null : { ...transform, x: 0 }), transition }}
       className={
-        "group relative shrink-0 rounded-xl border border-admin-border-soft bg-white p-1 " +
+        // Typeform's cards are outlines on the panel, not white tiles.
+        "group relative shrink-0 rounded-xl border border-admin-border bg-admin-panel p-1 " +
         // The card being dragged floats above the others with a shadow.
         (isDragging ? "z-10 shadow-[0_8px_24px_rgba(60,50,62,0.18)]" : "")
       }
@@ -208,25 +209,33 @@ function QuestionCard({
 
       <div className="absolute right-2 top-[14px] opacity-0 focus-within:opacity-100 group-hover:opacity-100">
         <Menu
+          // Opens beside the card, as in Typeform, so it never covers the list.
+          side="right"
+          align="start"
           trigger={
             <button
               type="button"
               aria-label={`Options for question ${number}`}
               className="flex h-7 w-7 items-center justify-center rounded-md text-admin-muted hover:bg-admin-hover"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </button>
           }
         >
-          {/* The same four actions as Typeform's question menu. */}
           <MenuItem onSelect={onMoveUp} disabled={!canMoveUp}>
+            <ChevronUp aria-hidden="true" className="h-4 w-4" />
             Move up
           </MenuItem>
           <MenuItem onSelect={onMoveDown} disabled={!canMoveDown}>
+            <ChevronDown aria-hidden="true" className="h-4 w-4" />
             Move down
           </MenuItem>
-          <MenuItem onSelect={onDuplicate}>Duplicate</MenuItem>
+          <MenuItem onSelect={onDuplicate}>
+            <CopyPlus aria-hidden="true" className="h-4 w-4" />
+            Duplicate
+          </MenuItem>
           <MenuItem onSelect={onDelete} isDanger>
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
             Delete
           </MenuItem>
         </Menu>

@@ -67,7 +67,7 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
           type="button"
           onClick={openRename}
           title="Rename form"
-          className="truncate rounded-md px-2 py-1 hover:bg-admin-hover"
+          className="truncate rounded-md px-1 py-1 underline-offset-4 hover:text-admin-text hover:underline"
         >
           {formTitle}
         </button>

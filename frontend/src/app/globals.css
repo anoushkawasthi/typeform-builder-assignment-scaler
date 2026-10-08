@@ -97,6 +97,20 @@
   }
 }
 
+/* Anything clickable shows the hand cursor, as in Typeform. Tailwind 4 leaves
+   buttons with the default arrow. This rule sits outside any layer so that it wins
+   over Tailwind's own base styles. */
+button:not(:disabled),
+a[href],
+select,
+label:has(input, select, button),
+[role="menuitem"],
+[role="option"],
+[role="tab"],
+summary {
+  cursor: pointer;
+}
+
 /* The brief blink of a choice when it is picked, just before the form moves on. */
 @keyframes choice-blink {
   0%,
