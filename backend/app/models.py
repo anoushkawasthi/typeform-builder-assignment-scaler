@@ -104,16 +104,17 @@ class Form(Base):
     published_at: Mapped[datetime | None] = mapped_column(UtcDateTime, nullable=True)
 
     # Theme. Plain columns rather than a JSON blob so each setting is visible in the schema.
-    theme_background_color: Mapped[str] = mapped_column(String(9), default="#FFFFFF")
-    theme_question_color: Mapped[str] = mapped_column(String(9), default="#000000")
-    theme_answer_color: Mapped[str] = mapped_column(String(9), default="#0445AF")
-    theme_button_color: Mapped[str] = mapped_column(String(9), default="#0445AF")
-    theme_button_text_color: Mapped[str] = mapped_column(String(9), default="#FFFFFF")
-    theme_font: Mapped[str] = mapped_column(String(60), default="system")
+    # The defaults are the colours of a new Typeform form.
+    theme_background_color: Mapped[str] = mapped_column(String(9), default="#FAFAFA")
+    theme_question_color: Mapped[str] = mapped_column(String(9), default="#2A222B")
+    theme_answer_color: Mapped[str] = mapped_column(String(9), default="#2A222B")
+    theme_button_color: Mapped[str] = mapped_column(String(9), default="#2A222B")
+    theme_button_text_color: Mapped[str] = mapped_column(String(9), default="#FAFAFA")
+    theme_font: Mapped[str] = mapped_column(String(60), default="Inter")
 
     # Text of the screen shown after submitting.
-    thank_you_title: Mapped[str] = mapped_column(String(255), default="Thank you!")
-    thank_you_text: Mapped[str] = mapped_column(Text, default="Your response has been recorded.")
+    thank_you_title: Mapped[str] = mapped_column(String(255), default="Thanks for completing this form")
+    thank_you_text: Mapped[str] = mapped_column(Text, default="Your answers have been recorded.")
 
     created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
     # Bumped on every draft edit; comparing it with published_at tells us whether there

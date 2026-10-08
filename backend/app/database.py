@@ -12,21 +12,28 @@ import os
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Where the database file lives. Overridable so the deployed container can point it at a
 # mounted volume, and tests can point it at an in-memory database.
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/app.db")
 
 
-def make_engine(database_url: str):
+def make_engine(database_url: str, single_connection: bool = False):
     """
     Build an engine for the given URL.
 
     Why `check_same_thread=False`: FastAPI runs request handlers in a thread pool, and
     SQLite by default refuses to let a connection be used from a thread other than the
     one that opened it. Each request still gets its own session, so this is safe.
+
+    `single_connection=True` is for tests: an in-memory SQLite database disappears when
+    its connection closes, so the tests keep exactly one connection open and share it.
     """
-    new_engine = create_engine(database_url, connect_args={"check_same_thread": False})
+    engine_options = {"connect_args": {"check_same_thread": False}}
+    if single_connection:
+        engine_options["poolclass"] = StaticPool
+    new_engine = create_engine(database_url, **engine_options)
 
     # Why this listener: SQLite ignores foreign keys unless told otherwise on every new
     # connection. Without it, deleting a form would leave its questions behind.
