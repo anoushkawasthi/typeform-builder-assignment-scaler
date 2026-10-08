@@ -181,7 +181,7 @@ export function QuestionList({
         <button
           type="button"
           onClick={onAddWelcome}
-          className="mx-3 mb-2 flex shrink-0 items-center gap-3 rounded-xl border border-dashed border-admin-border px-3 py-2 text-left text-admin-text hover:bg-admin-hover"
+          className="mx-3 mb-3 flex shrink-0 items-center gap-3 rounded-xl border border-dashed border-admin-border px-3 py-2 text-left text-admin-text hover:bg-admin-hover"
         >
           <Lightbulb aria-hidden="true" className="h-4 w-4 shrink-0" />
           <span className="flex-1 text-[13px] leading-[17px]">Add Welcome Screen</span>
@@ -191,8 +191,10 @@ export function QuestionList({
         </button>
       )}
 
-      {/* Typeform's shortcut to its logic features: opens the Logic dialog. */}
-      {questions.length > 1 && (
+      {/* Typeform's shortcut to its logic features: opens the Logic dialog. Typeform
+          shows one suggestion at a time, so this one waits until the welcome screen
+          suggestion above has been taken. */}
+      {welcomeTitle !== null && questions.length > 1 && (
         <button
           type="button"
           onClick={onOpenLogic}
@@ -257,12 +259,17 @@ function QuestionCard({
         onClick={onSelect}
         aria-pressed={isSelected}
         className={
-          "flex min-h-12 w-full cursor-grab items-center gap-3 rounded-lg px-1 py-2 pr-9 text-left active:cursor-grabbing " +
+          "flex h-12 w-full cursor-grab items-center gap-2 rounded-lg px-1 pr-9 text-left active:cursor-grabbing " +
           (isSelected ? "bg-admin-hover" : "hover:bg-admin-hover")
         }
       >
         <QuestionTypeChip type={question.type} number={number} />
-        <span className="line-clamp-2 flex-1 text-[13px] leading-[17px] text-admin-text">
+        {/* The selected question's title is dark; the others are greyed, as in Typeform. */}
+        <span
+          className={
+            "line-clamp-2 flex-1 text-[13px] leading-[17px] " + (isSelected ? "text-admin-text" : "text-admin-muted")
+          }
+        >
           {stripFormatting(question.title)}
         </span>
       </button>

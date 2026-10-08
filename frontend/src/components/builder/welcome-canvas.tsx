@@ -14,17 +14,18 @@ import { WelcomeScreen } from "@/components/respondent/welcome-screen";
 import { AutosaveText } from "@/components/ui/autosave-text";
 import type { FormDetail, FormUpdate } from "@/lib/types";
 
-import { CanvasFrame } from "./canvas-frame";
+import { CanvasFrame, type CanvasDevice } from "./canvas-frame";
 
 interface WelcomeCanvasProps {
   form: FormDetail;
+  device: CanvasDevice;
   onUpdate: (changes: FormUpdate) => void;
 }
 
-export function WelcomeCanvas({ form, onUpdate }: WelcomeCanvasProps) {
+export function WelcomeCanvas({ form, device, onUpdate }: WelcomeCanvasProps) {
   return (
     // The same frame and scaling as the question canvas (canvas-frame.tsx).
-    <CanvasFrame theme={form.theme}>
+    <CanvasFrame theme={form.theme} device={device}>
         <WelcomeScreen
           title={form.welcome_title}
           text={form.welcome_text}

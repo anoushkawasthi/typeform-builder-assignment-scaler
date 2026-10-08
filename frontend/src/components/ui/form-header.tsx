@@ -16,6 +16,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { Button } from "./button";
+import { AccountControls } from "./account-controls";
 import { Modal, ModalActions } from "./modal";
 
 export type FormSection =
@@ -100,7 +101,7 @@ export function FormHeader({
       {/* Centred on the page regardless of how wide the two sides are. */}
       <nav
         aria-label="Form sections"
-        className="absolute left-1/2 top-0 hidden h-14 -translate-x-1/2 items-center gap-1 md:flex"
+        className="absolute left-1/2 top-0 hidden h-14 -translate-x-1/2 items-center gap-1 lg:flex"
       >
         {visibleSections.map((section) => {
           const isActive = section.id === activeSection;
@@ -124,7 +125,10 @@ export function FormHeader({
         })}
       </nav>
 
-      <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      <div className="flex shrink-0 items-center gap-2">
+        {actions}
+        <AccountControls />
+      </div>
 
       <Modal
         isOpen={isRenaming}

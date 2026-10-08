@@ -20,7 +20,7 @@ import { QuestionScreen } from "@/components/respondent/question-screen";
 import { isChoiceType } from "@/lib/question-types";
 import type { Question, QuestionUpdate, Theme } from "@/lib/types";
 
-import { CanvasFrame } from "./canvas-frame";
+import { CanvasFrame, type CanvasDevice } from "./canvas-frame";
 import { ChoiceEditor } from "./choice-editor";
 
 interface QuestionCanvasProps {
@@ -28,6 +28,7 @@ interface QuestionCanvasProps {
   /** 1 for the first question. */
   number: number;
   theme: Theme;
+  device: CanvasDevice;
   isLastQuestion: boolean;
   onUpdate: (changes: QuestionUpdate) => void;
   onAddChoice: () => void;
@@ -41,6 +42,7 @@ export function QuestionCanvas({
   question,
   number,
   theme,
+  device,
   isLastQuestion,
   onUpdate,
   onAddChoice,
@@ -51,7 +53,7 @@ export function QuestionCanvas({
 }: QuestionCanvasProps) {
   return (
     // The frame and its scaling are shared with the welcome screen (canvas-frame.tsx).
-    <CanvasFrame theme={theme}>
+    <CanvasFrame theme={theme} device={device}>
         <QuestionScreen
           // A new key per question gives each one fresh text boxes, so text typed in one
           // question can never show up in another when the selection changes.

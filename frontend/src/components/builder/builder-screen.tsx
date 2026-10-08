@@ -15,7 +15,7 @@
  * component that receives what it needs as props.
  */
 
-import { Palette, Play, Plus, Settings } from "lucide-react";
+import { Accessibility, History, Languages, Monitor, Palette, PanelRightClose, PanelRightOpen, Play, Plus, Settings, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ import { responsesExportUrl } from "@/lib/api";
 import type { Question, QuestionType } from "@/lib/types";
 
 import { AddQuestionDialog } from "./add-question-dialog";
+import type { CanvasDevice } from "./canvas-frame";
 import { DesignPanel } from "./design-panel";
 import { EndingDialog } from "./ending-dialog";
 import { LogicDialog } from "./logic-dialog";
@@ -52,6 +53,9 @@ export function BuilderScreen({ formId }: { formId: number }) {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isLogicOpen, setIsLogicOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
+  // The two toolbar toggles: phone or desktop canvas, and whether the settings column shows.
+  const [canvasDevice, setCanvasDevice] = useState<CanvasDevice>("desktop");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(true);
 
   if (editor.isLoading) {
     return <p className="p-8 text-admin-muted">Loading form...</p>;
@@ -159,7 +163,12 @@ export function BuilderScreen({ formId }: { formId: number }) {
         }
       />
 
-      <div className="grid min-h-0 flex-1 grid-cols-[256px_minmax(0,1fr)_256px] gap-4 px-4 pb-4">
+      <div
+        className={
+          "grid min-h-0 flex-1 gap-4 px-4 pb-4 " +
+          (isSettingsOpen ? "grid-cols-[256px_minmax(0,1fr)_256px]" : "grid-cols-[256px_minmax(0,1fr)]")
+        }
+      >
         {/* Left column: the questions, then the ending. */}
         <div className="flex min-h-0 flex-col gap-3">
           <QuestionList
@@ -199,7 +208,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
               <Plus aria-hidden="true" className="h-4 w-4" />
               Add content
             </Button>
-            <span className="mx-2 h-4 w-px bg-admin-border" />
+            <span className="mx-1 h-4 w-px bg-admin-border" />
             <Button
               variant="ghost"
               aria-expanded={isDesignOpen}
@@ -209,9 +218,22 @@ export function BuilderScreen({ formId }: { formId: number }) {
               <Palette aria-hidden="true" className="h-4 w-4" />
               Design
             </Button>
-            <span className="mx-2 h-4 w-px bg-admin-border" />
-            {/* Icon-only, like Typeform's toolbar. Preview opens over the builder, in the
-                same tab. */}
+            <span className="mx-1 h-4 w-px bg-admin-border" />
+            {/* Icon-only, like Typeform's toolbar. The first switches the canvas between
+                the desktop and phone layouts; Preview opens over the builder. */}
+            <Button
+              variant="ghost"
+              iconOnly
+              aria-label={canvasDevice === "desktop" ? "Mobile view" : "Desktop view"}
+              title={canvasDevice === "desktop" ? "Mobile view" : "Desktop view"}
+              onClick={() => setCanvasDevice(canvasDevice === "desktop" ? "mobile" : "desktop")}
+            >
+              {canvasDevice === "desktop" ? (
+                <Smartphone aria-hidden="true" className="h-4 w-4" />
+              ) : (
+                <Monitor aria-hidden="true" className="h-4 w-4" />
+              )}
+            </Button>
             <Button
               variant="ghost"
               iconOnly
@@ -222,6 +244,17 @@ export function BuilderScreen({ formId }: { formId: number }) {
             >
               <Play aria-hidden="true" className="h-4 w-4" />
             </Button>
+            <span className="mx-1 h-4 w-px bg-admin-border" />
+            {/* Three Typeform tools that are outside the brief; the buttons mark their place. */}
+            <Button variant="ghost" iconOnly aria-label="Accessibility" title="Accessibility" onClick={() => toast("The accessibility checker is coming soon")}>
+              <Accessibility aria-hidden="true" className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" iconOnly aria-label="Version history" title="Version history" onClick={() => toast("Version history is coming soon")}>
+              <History aria-hidden="true" className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" iconOnly aria-label="Translations" title="Translations" onClick={() => toast("Translations are coming soon")}>
+              <Languages aria-hidden="true" className="h-4 w-4" />
+            </Button>
             <Button
               variant="ghost"
               iconOnly
@@ -230,6 +263,20 @@ export function BuilderScreen({ formId }: { formId: number }) {
               onClick={() => setIsEndingOpen(true)}
             >
               <Settings aria-hidden="true" className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              iconOnly
+              className="ml-auto"
+              aria-label={isSettingsOpen ? "Hide question panel" : "Show question panel"}
+              title={isSettingsOpen ? "Hide question panel" : "Show question panel"}
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+            >
+              {isSettingsOpen ? (
+                <PanelRightClose aria-hidden="true" className="h-4 w-4" />
+              ) : (
+                <PanelRightOpen aria-hidden="true" className="h-4 w-4" />
+              )}
             </Button>
 
             {isDesignOpen && <DesignPanel form={form} onUpdate={editor.updateForm} onClose={() => setIsDesignOpen(false)} />}
@@ -241,7 +288,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
               work area starts right under the toolbar. */}
           <div className="-mt-3 flex min-h-0 flex-1 flex-col justify-center overflow-y-auto pb-[70px]">
             {showsWelcome ? (
-              <WelcomeCanvas form={form} onUpdate={editor.updateForm} />
+              <WelcomeCanvas form={form} device={canvasDevice} onUpdate={editor.updateForm} />
             ) : selectedQuestion === undefined ? (
               <div className="flex h-full flex-col items-center justify-center rounded-xl bg-admin-panel text-center">
                 <h2 className="text-[21px] leading-7 text-admin-text">Add your first question</h2>
@@ -256,6 +303,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
                 question={selectedQuestion}
                 number={selectedIndex + 1}
                 theme={form.theme}
+                device={canvasDevice}
                 isLastQuestion={selectedIndex === questions.length - 1}
                 onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
                 onAddChoice={() => editor.addChoice(selectedQuestion.id)}
@@ -268,18 +316,20 @@ export function BuilderScreen({ formId }: { formId: number }) {
           </div>
         </div>
 
-        {/* Right column: settings of the selected question. */}
-        {showsWelcome ? (
-          <WelcomeSettings form={form} onUpdate={editor.updateForm} onRemove={removeWelcomeScreen} />
-        ) : selectedQuestion === undefined ? (
-          <aside className="rounded-xl bg-admin-panel p-4 text-admin-muted">Question settings appear here.</aside>
-        ) : (
-          <QuestionSettings
-            question={selectedQuestion}
-            onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
-            onOpenLogic={() => setIsLogicOpen(true)}
-          />
-        )}
+        {/* Right column: settings of the selected question. The toolbar's last button
+            hides it to give the canvas more room. */}
+        {isSettingsOpen &&
+          (showsWelcome ? (
+            <WelcomeSettings form={form} onUpdate={editor.updateForm} onRemove={removeWelcomeScreen} />
+          ) : selectedQuestion === undefined ? (
+            <aside className="rounded-xl bg-admin-panel p-4 text-admin-muted">Question settings appear here.</aside>
+          ) : (
+            <QuestionSettings
+              question={selectedQuestion}
+              onUpdate={(changes) => editor.updateQuestion(selectedQuestion.id, changes)}
+              onOpenLogic={() => setIsLogicOpen(true)}
+            />
+          ))}
       </div>
 
       <AddQuestionDialog
