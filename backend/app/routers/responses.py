@@ -31,6 +31,22 @@ router = APIRouter(prefix="/api", tags=["responses"])
 XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
+def download_headers(filename: str) -> dict[str, str]:
+    """
+    Headers for a file download.
+
+    "attachment" makes the browser save the file instead of displaying it.
+
+    Why "no-store": the hosted API sits behind Cloudflare, which keeps a copy of anything
+    whose address ends in .csv or .xlsx for hours unless told not to. Without this an
+    export kept returning the same file after new responses had arrived.
+    """
+    return {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Cache-Control": "no-store",
+    }
+
+
 def load_submitted_responses(db: Session, form: Form, response_ids: list[int]) -> list[Response]:
     """
     A form's submitted responses, newest first, with their answers. If `response_ids` is
@@ -78,8 +94,7 @@ def export_responses_csv(
     return HttpResponse(
         content=export.table_to_csv(table),
         media_type="text/csv",
-        # "attachment" makes the browser download the file instead of displaying it.
-        headers={"Content-Disposition": f'attachment; filename="responses-{form.public_id}.csv"'},
+        headers=download_headers(f"responses-{form.public_id}.csv"),
     )
 
 
@@ -97,7 +112,7 @@ def export_responses_xlsx(
     return HttpResponse(
         content=export.table_to_xlsx(table),
         media_type=XLSX_MEDIA_TYPE,
-        headers={"Content-Disposition": f'attachment; filename="responses-{form.public_id}.xlsx"'},
+        headers=download_headers(f"responses-{form.public_id}.xlsx"),
     )
 
 

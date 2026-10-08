@@ -205,6 +205,8 @@ def test_csv_export_has_a_header_and_one_row_per_response(client, published_form
     response = client.get(f"/api/forms/{published_form['form_id']}/responses.csv")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/csv")
+    # A cache in front of the API must never keep an export: it goes stale at once.
+    assert response.headers["cache-control"] == "no-store"
 
     rows = list(csv.reader(io.StringIO(response.text)))
     assert len(rows) == 2
@@ -228,6 +230,7 @@ def test_xlsx_export_holds_the_same_table_as_the_csv(client, published_form):
     response = client.get(f"/api/forms/{form_id}/responses.xlsx")
     assert response.status_code == 200
     assert response.headers["content-disposition"].endswith('.xlsx"')
+    assert response.headers["cache-control"] == "no-store"
 
     sheet = load_workbook(io.BytesIO(response.content)).active
     xlsx_rows = []
