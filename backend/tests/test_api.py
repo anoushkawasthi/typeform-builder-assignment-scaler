@@ -292,3 +292,20 @@ def test_duplicate_copies_logic_jumps_onto_the_new_questions(client):
     copy = client.post(f"/api/forms/{form_id}/duplicate").json()
     first, _, third = copy["questions"]
     assert first["logic_jumps"][0]["target_question_id"] == third["id"]
+
+
+def test_duplicate_question_goes_right_after_the_original(client):
+    form = client.post("/api/forms", json={"title": "Dup"}).json()
+    client.post(f"/api/forms/{form['id']}/questions", json={"type": "multiple_choice"})
+    form = client.post(f"/api/forms/{form['id']}/questions", json={"type": "email"}).json()
+    multiple_choice = form["questions"][0]
+    client.patch(f"/api/choices/{multiple_choice['choices'][0]['id']}", json={"label": "One"})
+    client.patch(f"/api/questions/{multiple_choice['id']}", json={"title": "Pick", "is_required": True})
+
+    form = client.post(f"/api/questions/{multiple_choice['id']}/duplicate").json()
+    assert [question["type"] for question in form["questions"]] == ["multiple_choice", "multiple_choice", "email"]
+    copy = form["questions"][1]
+    assert copy["id"] != multiple_choice["id"]
+    assert copy["title"] == "Pick" and copy["is_required"] is True
+    assert [choice["label"] for choice in copy["choices"]] == ["One"]
+    assert copy["choices"][0]["id"] != multiple_choice["choices"][0]["id"]

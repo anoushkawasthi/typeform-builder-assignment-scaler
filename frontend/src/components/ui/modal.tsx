@@ -25,10 +25,24 @@ interface ModalProps {
   description?: string;
   /** Tailwind max-width class. Defaults to a small dialog. */
   widthClass?: string;
+  /**
+   * "white" (default): a white dialog, used for short questions such as rename and
+   * delete. "panel": a light grey dialog whose content sits in white cards, used for
+   * the large dialogs.
+   */
+  tone?: "white" | "panel";
   children: ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, description, widthClass = "max-w-[440px]", children }: ModalProps) {
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  description,
+  widthClass = "max-w-[440px]",
+  tone = "white",
+  children,
+}: ModalProps) {
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -38,15 +52,16 @@ export function Modal({ isOpen, onClose, title, description, widthClass = "max-w
           aria-describedby={description === undefined ? undefined : "modal-description"}
           className={
             "fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 " +
-            "overflow-y-auto rounded-2xl bg-admin-panel p-6 shadow-[0_0_0_3px_var(--color-admin-ring)] " +
+            "overflow-y-auto rounded-2xl shadow-[0_0_0_3px_var(--color-admin-ring)] " +
+            (tone === "white" ? "bg-white p-8 " : "bg-admin-panel p-6 ") +
             widthClass
           }
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="text-[18px] font-medium leading-6 text-admin-text">{title}</Dialog.Title>
+              <Dialog.Title className="text-[21px] font-normal leading-7 text-admin-text">{title}</Dialog.Title>
               {description !== undefined && (
-                <Dialog.Description id="modal-description" className="mt-1 text-admin-muted">
+                <Dialog.Description id="modal-description" className="mt-3 whitespace-pre-line text-admin-muted">
                   {description}
                 </Dialog.Description>
               )}
@@ -65,7 +80,11 @@ export function Modal({ isOpen, onClose, title, description, widthClass = "max-w
   );
 }
 
-/** The row of buttons at the bottom of a modal, right-aligned. */
+/**
+ * The row of buttons at the bottom of a white modal. Typeform puts them on a light grey
+ * strip across the full width; the negative margins cancel the modal's 32px padding so
+ * the strip reaches the edges.
+ */
 export function ModalActions({ children }: { children: ReactNode }) {
-  return <div className="mt-6 flex justify-end gap-2">{children}</div>;
+  return <div className="-mx-8 -mb-8 mt-8 flex justify-end gap-3 rounded-b-2xl bg-admin-panel p-4">{children}</div>;
 }

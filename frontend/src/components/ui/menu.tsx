@@ -26,7 +26,8 @@ export function Menu({ trigger, align = "end", children }: MenuProps) {
         <DropdownMenu.Content
           align={align}
           sideOffset={4}
-          className="z-50 min-w-[180px] rounded-xl border border-admin-border bg-white p-1 shadow-[0_8px_24px_rgba(60,50,62,0.12)]"
+          // Typeform's menus have a thin border and a soft 3px ring instead of a drop shadow.
+          className="z-50 min-w-[202px] rounded-xl border border-admin-border bg-white p-2 shadow-[0_0_0_3px_var(--color-admin-ring)]"
         >
           {children}
         </DropdownMenu.Content>
@@ -49,12 +50,17 @@ export function MenuItem({ onSelect, isDanger = false, disabled = false, childre
       disabled={disabled}
       onSelect={onSelect}
       className={
-        "flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg px-2 text-[14px] outline-none " +
+        "flex h-9 cursor-pointer select-none items-center gap-2 rounded-lg pl-2 pr-3 text-[14px] outline-none " +
         "data-[highlighted]:bg-admin-hover data-[disabled]:cursor-default data-[disabled]:opacity-40 " +
-        (isDanger ? "text-danger" : "text-admin-text")
+        (isDanger ? "text-danger-text" : "text-admin-muted")
       }
     >
       {children}
     </DropdownMenu.Item>
   );
+}
+
+/** A thin line between groups of menu items. */
+export function MenuSeparator() {
+  return <DropdownMenu.Separator className="mx-2 my-2 h-px bg-admin-border" />;
 }

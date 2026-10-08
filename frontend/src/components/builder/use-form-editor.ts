@@ -72,6 +72,10 @@ export function useFormEditor(formId: number) {
     mutationFn: (variables: { questionId: number; changes: QuestionUpdate }) =>
       api.updateQuestion(variables.questionId, variables.changes),
   });
+  const duplicateQuestionMutation = useMutation({
+    ...saveOptions,
+    mutationFn: (questionId: number) => api.duplicateQuestion(questionId),
+  });
   const deleteQuestionMutation = useMutation({
     ...saveOptions,
     mutationFn: (questionId: number) => api.deleteQuestion(questionId),
@@ -144,6 +148,7 @@ export function useFormEditor(formId: number) {
     addQuestion: (type: QuestionType, position?: number) => addQuestionMutation.mutateAsync({ type, position }),
     updateQuestion: (questionId: number, changes: QuestionUpdate) =>
       updateQuestionMutation.mutate({ questionId, changes }),
+    duplicateQuestion: (questionId: number) => duplicateQuestionMutation.mutateAsync(questionId),
     deleteQuestion: (questionId: number) => deleteQuestionMutation.mutateAsync(questionId),
     addChoice: (questionId: number) => addChoiceMutation.mutate(questionId),
     renameChoice: (choiceId: number, label: string) => renameChoiceMutation.mutate({ choiceId, label }),

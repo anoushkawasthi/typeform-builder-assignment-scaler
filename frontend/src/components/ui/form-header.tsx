@@ -97,7 +97,7 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
 
       <div className="flex shrink-0 items-center gap-2">{actions}</div>
 
-      <Modal isOpen={isRenaming} onClose={() => setIsRenaming(false)} title="Rename this form">
+      <Modal isOpen={isRenaming} onClose={() => setIsRenaming(false)} title="Rename form">
         <form onSubmit={submitRename}>
           <input
             autoFocus
@@ -105,7 +105,8 @@ export function FormHeader({ formId, formTitle, activeSection, onRename, actions
             onChange={(event) => setDraftTitle(event.target.value)}
             maxLength={255}
             aria-label="Form name"
-            className="h-10 w-full rounded-lg border border-admin-border bg-white px-3 text-admin-text outline-none focus:border-admin-text"
+            onFocus={(event) => event.target.select()}
+            className="h-[46px] w-full rounded-lg border border-admin-border bg-white px-3 text-[16px] text-admin-text outline-none focus:border-admin-text focus:shadow-[0_0_0_3px_var(--color-admin-ring)]"
           />
           <ModalActions>
             <Button onClick={() => setIsRenaming(false)}>Cancel</Button>

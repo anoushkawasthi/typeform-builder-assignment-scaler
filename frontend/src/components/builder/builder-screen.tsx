@@ -26,7 +26,8 @@ import { Modal, ModalActions } from "@/components/ui/modal";
 import type { Question, QuestionType } from "@/lib/types";
 
 import { AddQuestionDialog } from "./add-question-dialog";
-import { DesignDialog, type DesignTab } from "./design-dialog";
+import { DesignPanel } from "./design-panel";
+import { EndingDialog } from "./ending-dialog";
 import { PublishButton } from "./publish-button";
 import { QuestionCanvas } from "./question-canvas";
 import { QuestionList } from "./question-list";
@@ -39,7 +40,8 @@ export function BuilderScreen({ formId }: { formId: number }) {
 
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [designTab, setDesignTab] = useState<DesignTab | null>(null);
+  const [isDesignOpen, setIsDesignOpen] = useState(false);
+  const [isEndingOpen, setIsEndingOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
 
   if (editor.isLoading) {
@@ -72,6 +74,19 @@ export function BuilderScreen({ formId }: { formId: number }) {
       const newQuestion = updatedForm.questions.find((question) => !existingIds.includes(question.id));
       if (newQuestion !== undefined) {
         setSelectedQuestionId(newQuestion.id);
+      }
+    } catch {
+      // The editor already showed the error in a toast.
+    }
+  }
+
+  async function duplicateQuestion(question: Question) {
+    const existingIds = questions.map((item) => item.id);
+    try {
+      const updatedForm = await editor.duplicateQuestion(question.id);
+      const copy = updatedForm.questions.find((item) => !existingIds.includes(item.id));
+      if (copy !== undefined) {
+        setSelectedQuestionId(copy.id);
       }
     } catch {
       // The editor already showed the error in a toast.
@@ -122,6 +137,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
             selectedQuestionId={selectedQuestion?.id ?? null}
             onSelect={setSelectedQuestionId}
             onReorder={editor.reorderQuestions}
+            onDuplicate={(question) => void duplicateQuestion(question)}
             onDelete={requestDelete}
             onAddClick={() => setIsAddDialogOpen(true)}
           />
@@ -129,7 +145,7 @@ export function BuilderScreen({ formId }: { formId: number }) {
             <h2 className="px-2 pb-2 pt-1 font-medium text-[#262627]">Endings</h2>
             <button
               type="button"
-              onClick={() => setDesignTab("thank-you")}
+              onClick={() => setIsEndingOpen(true)}
               className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-admin-border-soft bg-white px-2 py-2 text-left hover:bg-admin-hover"
             >
               <span className="flex h-6 w-12 shrink-0 items-center justify-center rounded-[6px] bg-[#DEDCDE] text-[12px] text-admin-text">
@@ -142,29 +158,45 @@ export function BuilderScreen({ formId }: { formId: number }) {
 
         {/* Centre column: toolbar, then the canvas. */}
         <div className="flex min-h-0 flex-col gap-3">
-          <div className="flex h-12 shrink-0 items-center gap-2 rounded-xl bg-admin-panel px-2">
+          {/* `relative` so the Design panel can float just below the toolbar. */}
+          <div className="relative flex h-12 shrink-0 items-center gap-1 rounded-xl bg-admin-panel px-2">
             <Button variant="primary" onClick={() => setIsAddDialogOpen(true)}>
               <Plus aria-hidden="true" className="h-4 w-4" />
               Add content
             </Button>
-            <span className="mx-1 h-4 w-px bg-admin-border" />
-            <Button variant="ghost" onClick={() => setDesignTab("theme")}>
+            <span className="mx-2 h-4 w-px bg-admin-border" />
+            <Button
+              variant="ghost"
+              aria-expanded={isDesignOpen}
+              className={isDesignOpen ? "bg-admin-hover" : ""}
+              onClick={() => setIsDesignOpen(!isDesignOpen)}
+            >
               <Palette aria-hidden="true" className="h-4 w-4" />
               Design
             </Button>
-            <span className="mx-1 h-4 w-px bg-admin-border" />
-            {/* Opens in a new tab so the builder keeps its place. */}
+            <span className="mx-2 h-4 w-px bg-admin-border" />
+            {/* Icon-only, like Typeform's toolbar. Preview opens in a new tab so the
+                builder keeps its place. */}
             <Link
               href={`/forms/${form.id}/preview`}
               target="_blank"
-              className="flex h-8 items-center gap-2 rounded-lg px-3 font-medium text-admin-muted hover:bg-admin-hover"
+              aria-label="Preview"
+              title="Preview"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
             >
               <Play aria-hidden="true" className="h-4 w-4" />
-              Preview
             </Link>
-            <Button variant="ghost" iconOnly aria-label="Form settings" onClick={() => setDesignTab("thank-you")}>
+            <Button
+              variant="ghost"
+              iconOnly
+              aria-label="Form settings"
+              title="Form settings"
+              onClick={() => setIsEndingOpen(true)}
+            >
               <Settings aria-hidden="true" className="h-4 w-4" />
             </Button>
+
+            {isDesignOpen && <DesignPanel form={form} onUpdate={editor.updateForm} onClose={() => setIsDesignOpen(false)} />}
           </div>
 
           {/* The work area: the canvas sits in the middle of it, as in Typeform. */}
@@ -210,18 +242,12 @@ export function BuilderScreen({ formId }: { formId: number }) {
 
       <AddQuestionDialog isOpen={isAddDialogOpen} onClose={() => setIsAddDialogOpen(false)} onPick={handleAddQuestion} />
 
-      <DesignDialog
-        activeTab={designTab}
-        onTabChange={setDesignTab}
-        onClose={() => setDesignTab(null)}
-        form={form}
-        onUpdate={editor.updateForm}
-      />
+      <EndingDialog isOpen={isEndingOpen} onClose={() => setIsEndingOpen(false)} form={form} onUpdate={editor.updateForm} />
 
       <Modal
         isOpen={questionToDelete !== null}
         onClose={() => setQuestionToDelete(null)}
-        title="Delete this question?"
+        title="Delete question?"
         description={
           questionToDelete === null
             ? undefined
@@ -230,9 +256,11 @@ export function BuilderScreen({ formId }: { formId: number }) {
         }
       >
         <ModalActions>
-          <Button onClick={() => setQuestionToDelete(null)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => setQuestionToDelete(null)}>
+            Cancel
+          </Button>
           <Button variant="danger" onClick={() => questionToDelete !== null && void deleteQuestion(questionToDelete)}>
-            Delete question
+            Delete
           </Button>
         </ModalActions>
       </Modal>

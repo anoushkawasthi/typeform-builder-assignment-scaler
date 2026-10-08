@@ -4,8 +4,8 @@
  * question-list.tsx — the builder's left panel: the ordered list of questions.
  *
  * What it does:   shows each question as a card (type chip, number, title), lets the
- *                 creator select one, drag cards to reorder them, and delete one from
- *                 its "..." menu.
+ *                 creator select one, drag cards to reorder them, and move, duplicate
+ *                 or delete one from its "..." menu.
  * Depends on:     @dnd-kit (drag and drop), ui/question-type-chip.tsx, ui/menu.tsx.
  * Depended on by: builder-screen.tsx.
  *
@@ -34,7 +34,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { MoreHorizontal, Plus } from "lucide-react";
 
 import { Menu, MenuItem } from "@/components/ui/menu";
 import { QuestionTypeChip } from "@/components/ui/question-type-chip";
@@ -45,6 +45,7 @@ interface QuestionListProps {
   selectedQuestionId: number | null;
   onSelect: (questionId: number) => void;
   onReorder: (questionIds: number[]) => void;
+  onDuplicate: (question: Question) => void;
   onDelete: (question: Question) => void;
   onAddClick: () => void;
 }
@@ -54,6 +55,7 @@ export function QuestionList({
   selectedQuestionId,
   onSelect,
   onReorder,
+  onDuplicate,
   onDelete,
   onAddClick,
 }: QuestionListProps) {
@@ -76,6 +78,12 @@ export function QuestionList({
     onReorder(arrayMove(questionIds, oldIndex, newIndex));
   }
 
+  /** Move a question one place up (-1) or down (+1). Used by the "..." menu. */
+  function moveQuestion(index: number, offset: -1 | 1) {
+    const questionIds = questions.map((question) => question.id);
+    onReorder(arrayMove(questionIds, index, index + offset));
+  }
+
   return (
     <section className="flex min-h-0 flex-1 flex-col rounded-xl bg-admin-panel">
       <h2 className="px-5 pb-3 pt-5 font-medium text-[#262627]">Questions</h2>
@@ -89,21 +97,30 @@ export function QuestionList({
                 question={question}
                 number={index + 1}
                 isSelected={question.id === selectedQuestionId}
+                canMoveUp={index > 0}
+                canMoveDown={index < questions.length - 1}
                 onSelect={() => onSelect(question.id)}
+                onMoveUp={() => moveQuestion(index, -1)}
+                onMoveDown={() => moveQuestion(index, 1)}
+                onDuplicate={() => onDuplicate(question)}
                 onDelete={() => onDelete(question)}
+                onAddClick={onAddClick}
               />
             ))}
           </SortableContext>
         </DndContext>
 
-        <button
-          type="button"
-          onClick={onAddClick}
-          className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-admin-border text-[13px] font-medium text-admin-muted hover:bg-admin-hover"
-        >
-          <Plus aria-hidden="true" className="h-4 w-4" />
-          Add content
-        </button>
+        {/* With no questions there is no selected card to hold the add row. */}
+        {questions.length === 0 && (
+          <button
+            type="button"
+            onClick={onAddClick}
+            className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-dashed border-admin-border text-[13px] font-medium text-admin-muted hover:bg-admin-hover"
+          >
+            <Plus aria-hidden="true" className="h-4 w-4" />
+            Add content
+          </button>
+        )}
       </div>
     </section>
   );
@@ -113,11 +130,29 @@ interface QuestionCardProps {
   question: Question;
   number: number;
   isSelected: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onSelect: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onDuplicate: () => void;
   onDelete: () => void;
+  onAddClick: () => void;
 }
 
-function QuestionCard({ question, number, isSelected, onSelect, onDelete }: QuestionCardProps) {
+function QuestionCard({
+  question,
+  number,
+  isSelected,
+  canMoveUp,
+  canMoveDown,
+  onSelect,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onDelete,
+  onAddClick,
+}: QuestionCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id });
 
   return (
@@ -148,7 +183,7 @@ function QuestionCard({ question, number, isSelected, onSelect, onDelete }: Ques
         </span>
       </button>
 
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 focus-within:opacity-100 group-hover:opacity-100">
+      <div className="absolute right-2 top-[14px] opacity-0 focus-within:opacity-100 group-hover:opacity-100">
         <Menu
           trigger={
             <button
@@ -160,12 +195,31 @@ function QuestionCard({ question, number, isSelected, onSelect, onDelete }: Ques
             </button>
           }
         >
+          {/* The same four actions as Typeform's question menu. */}
+          <MenuItem onSelect={onMoveUp} disabled={!canMoveUp}>
+            Move up
+          </MenuItem>
+          <MenuItem onSelect={onMoveDown} disabled={!canMoveDown}>
+            Move down
+          </MenuItem>
+          <MenuItem onSelect={onDuplicate}>Duplicate</MenuItem>
           <MenuItem onSelect={onDelete} isDanger>
-            <Trash2 aria-hidden="true" className="h-4 w-4" />
             Delete
           </MenuItem>
         </Menu>
       </div>
+
+      {/* Typeform shows "Add content" inside the selected card: new questions go after it. */}
+      {isSelected && (
+        <button
+          type="button"
+          onClick={onAddClick}
+          className="mt-1 flex h-9 w-full items-center justify-center gap-2 border-t border-admin-border-soft text-[13px] font-medium text-admin-muted hover:bg-admin-hover"
+        >
+          <Plus aria-hidden="true" className="h-4 w-4" />
+          Add content
+        </button>
+      )}
     </div>
   );
 }

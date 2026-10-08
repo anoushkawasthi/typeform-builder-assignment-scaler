@@ -183,6 +183,7 @@ export function ResponsesTab({ formId, table }: ResponsesTabProps) {
             : `Submitted ${formatDate(openResponse.submitted_at)}, ${formatTime(openResponse.submitted_at)}`
         }
         widthClass="max-w-[560px]"
+        tone="panel"
       >
         {openResponse !== null && (
           <ol className="flex flex-col gap-3">

@@ -26,7 +26,8 @@
   --color-admin-ring: rgba(84, 80, 88, 0.09);
   --color-status-green: #1e7b57;
   --color-status-green-bg: #e9f6ef;
-  --color-danger: #c0392b;
+  --color-danger: #c74e43;
+  --color-danger-text: #913b21;
   --color-chart: #a566bc;
 
   /* Form theme: the base colours come from the per-form variables... */

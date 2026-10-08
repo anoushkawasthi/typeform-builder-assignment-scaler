@@ -10,11 +10,11 @@
  * Depended on by: forms-list-screen.tsx.
  */
 
-import { BarChart3, Blocks, Copy, Link2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Blocks, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Menu, MenuItem } from "@/components/ui/menu";
+import { Menu, MenuItem, MenuSeparator } from "@/components/ui/menu";
 import type { FormListItem } from "@/lib/types";
 
 export interface FormRowProps {
@@ -69,24 +69,20 @@ function FormActionsMenu({ form, onRename, onDuplicate, onDelete, onCopyLink }: 
         </button>
       }
     >
-      <MenuItem onSelect={onRename}>
-        <Pencil aria-hidden="true" className="h-4 w-4" />
-        Rename
-      </MenuItem>
-      <MenuItem onSelect={onDuplicate}>
-        <Copy aria-hidden="true" className="h-4 w-4" />
-        Duplicate
-      </MenuItem>
-      <MenuItem onSelect={() => router.push(`/forms/${form.id}/results`)}>
-        <BarChart3 aria-hidden="true" className="h-4 w-4" />
-        Results
-      </MenuItem>
+      {/* Same items, order and grouping as Typeform's form menu. */}
       <MenuItem onSelect={onCopyLink} disabled={form.status !== "published"}>
-        <Link2 aria-hidden="true" className="h-4 w-4" />
         Copy link
       </MenuItem>
+      <MenuSeparator />
+      <MenuItem onSelect={() => router.push(`/forms/${form.id}/create`)}>Content</MenuItem>
+      <MenuItem onSelect={() => router.push(`/forms/${form.id}/workflow`)}>Workflow</MenuItem>
+      <MenuItem onSelect={() => router.push(`/forms/${form.id}/share`)}>Share</MenuItem>
+      <MenuItem onSelect={() => router.push(`/forms/${form.id}/results`)}>Results</MenuItem>
+      <MenuSeparator />
+      <MenuItem onSelect={onRename}>Rename</MenuItem>
+      <MenuItem onSelect={onDuplicate}>Duplicate</MenuItem>
+      <MenuSeparator />
       <MenuItem onSelect={onDelete} isDanger>
-        <Trash2 aria-hidden="true" className="h-4 w-4" />
         Delete
       </MenuItem>
     </Menu>

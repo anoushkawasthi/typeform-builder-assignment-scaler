@@ -119,6 +119,47 @@ def update_question(
     return presenters.present_form_detail(db, form)
 
 
+@router.post(
+    "/questions/{question_id}/duplicate",
+    response_model=schemas.FormDetailOut,
+    status_code=status.HTTP_201_CREATED,
+)
+def duplicate_question(
+    question_id: int,
+    db: Session = Depends(get_db),
+    creator: Creator = Depends(get_current_creator),
+):
+    """
+    Insert a copy of a question directly after it, with its settings and choices.
+    Logic jumps are not copied: a rule on the copy pointing where the original points
+    would rarely be what the creator wants.
+    """
+    original = get_question_or_404(db, question_id, creator)
+    form = original.form
+
+    copy = Question(
+        form_id=form.id,
+        type=original.type,
+        title=original.title,
+        description=original.description,
+        is_required=original.is_required,
+        allow_multiple=original.allow_multiple,
+        rating_max=original.rating_max,
+    )
+    for position, choice in enumerate(snapshot.active_choices(original)):
+        copy.choices.append(QuestionChoice(label=choice.label, position=position))
+
+    ordered = snapshot.active_questions(form)
+    db.add(copy)
+    ordered.insert(ordered.index(original) + 1, copy)
+    renumber_positions(ordered)
+
+    snapshot.touch_form(form)
+    db.commit()
+    db.refresh(form)
+    return presenters.present_form_detail(db, form)
+
+
 @router.delete("/questions/{question_id}", response_model=schemas.FormDetailOut)
 def delete_question(
     question_id: int,

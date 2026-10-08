@@ -44,7 +44,7 @@ export function AddQuestionDialog({ isOpen, onClose, onPick }: AddQuestionDialog
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Add form elements" widthClass="max-w-[960px]">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Add form elements" widthClass="max-w-[960px]" tone="panel">
       <div className="flex flex-col gap-8 rounded-xl bg-white p-8 sm:flex-row">
         {/* Left column: search, as in Typeform's dialog. */}
         <div className="shrink-0 sm:w-[208px]">

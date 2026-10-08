@@ -371,7 +371,7 @@ export function FormsListScreen() {
         </div>
       </div>
 
-      <Modal isOpen={formToRename !== null} onClose={() => setFormToRename(null)} title="Rename this form">
+      <Modal isOpen={formToRename !== null} onClose={() => setFormToRename(null)} title="Rename form">
         <form onSubmit={submitRename}>
           <input
             autoFocus
@@ -379,7 +379,8 @@ export function FormsListScreen() {
             onChange={(event) => setRenameText(event.target.value)}
             maxLength={255}
             aria-label="Form name"
-            className="h-10 w-full rounded-lg border border-admin-border bg-white px-3 text-admin-text outline-none focus:border-admin-text"
+            onFocus={(event) => event.target.select()}
+            className="h-[46px] w-full rounded-lg border border-admin-border bg-white px-3 text-[16px] text-admin-text outline-none focus:border-admin-text focus:shadow-[0_0_0_3px_var(--color-admin-ring)]"
           />
           <ModalActions>
             <Button onClick={() => setFormToRename(null)}>Cancel</Button>
@@ -393,19 +394,23 @@ export function FormsListScreen() {
       <Modal
         isOpen={formToDelete !== null}
         onClose={() => setFormToDelete(null)}
-        title="Delete this form?"
+        title="Delete form?"
         description={
           formToDelete === null
             ? undefined
-            : `"${formToDelete.title}" and its ${formToDelete.response_count} ` +
-              `${formToDelete.response_count === 1 ? "response" : "responses"} will be permanently deleted. ` +
-              `This can't be undone.`
+            : `You're about to delete "${formToDelete.title}".\n` +
+              (formToDelete.response_count === 0
+                ? "This will permanently delete the form."
+                : `This will permanently delete the form and its ${formToDelete.response_count} ` +
+                  `${formToDelete.response_count === 1 ? "response" : "responses"}.`)
         }
       >
         <ModalActions>
-          <Button onClick={() => setFormToDelete(null)}>Cancel</Button>
+          <Button variant="ghost" onClick={() => setFormToDelete(null)}>
+            Cancel
+          </Button>
           <Button variant="danger" onClick={confirmDelete}>
-            Delete form
+            Delete
           </Button>
         </ModalActions>
       </Modal>

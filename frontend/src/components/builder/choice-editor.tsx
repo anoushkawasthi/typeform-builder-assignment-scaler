@@ -48,7 +48,7 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove }: ChoiceEdito
     <div className="flex flex-col items-start gap-2">
       {choices.map((choice, index) => (
         <div key={choice.id} className="group flex items-center gap-2">
-          <div className="flex min-h-[44px] w-[256px] items-center gap-2 rounded-lg bg-form-answer-6 px-[10px] py-[6px] shadow-[0_0_0_1px_color-mix(in_srgb,var(--form-answer)_10%,transparent)]">
+          <div className="flex min-h-[38px] w-[256px] items-center gap-2 rounded-lg bg-form-answer-6 px-[10px] py-[4px] shadow-[0_0_0_1px_color-mix(in_srgb,var(--form-answer)_10%,transparent)]">
             <span
               aria-hidden="true"
               className="flex h-6 min-w-6 items-center justify-center rounded-[4px] border border-form-answer-24 bg-form-bg px-[6px] text-[12px] font-semibold leading-none text-form-answer"

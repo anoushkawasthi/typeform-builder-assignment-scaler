@@ -118,6 +118,10 @@ export function updateQuestion(questionId: number, changes: QuestionUpdate) {
   return request<FormDetail>("PATCH", `/api/questions/${questionId}`, changes);
 }
 
+export function duplicateQuestion(questionId: number) {
+  return request<FormDetail>("POST", `/api/questions/${questionId}/duplicate`);
+}
+
 export function deleteQuestion(questionId: number) {
   return request<FormDetail>("DELETE", `/api/questions/${questionId}`);
 }
