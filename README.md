@@ -94,12 +94,6 @@ Run the tests: `cd backend && pytest`.
 Browser ──► Next.js frontend (Vercel) ──JSON over HTTPS──► FastAPI backend ──► SQLite file
 ```
 
-The pages call `/api/...` on their own site, and Next.js passes those requests on to
-the FastAPI server (the `rewrites` rule in `frontend/next.config.ts`). The browser so
-deals with one site only, which avoids the extra permission request (a CORS preflight)
-it would otherwise send before every save. The API also answers on its own address,
-for the API docs and for direct use.
-
 The frontend never touches the database; it only calls the API. All rules (validation,
 publishing, statistics) live in the backend. The frontend repeats validation only to give
 instant feedback.
@@ -269,6 +263,4 @@ With Docker instead: `cp .env.example .env && docker compose up -d --build` (the
 file then lives in the `sqlite-data` volume).
 
 **Frontend (Vercel).** Import the repository, set the root directory to `frontend`, and
-set `NEXT_PUBLIC_API_URL` to the backend's public address (it is where `/api` requests
-are passed on to). `frontend/vercel.json` runs the site's server code in Mumbai, close
-to the API server.
+set `NEXT_PUBLIC_API_URL` to the backend's public address.

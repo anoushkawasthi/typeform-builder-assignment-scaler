@@ -2,18 +2,11 @@
  * api.ts — every HTTP call the frontend makes, in one place.
  *
  * What it does:   one small function per backend route, all going through `request`.
- * Depends on:     lib/types.ts, and the pass-through rule in next.config.ts.
+ * Depends on:     lib/types.ts and the NEXT_PUBLIC_API_URL environment variable.
  * Depended on by: every screen component (usually through TanStack Query).
  *
  * Why one file: components never build URLs or call fetch themselves, so if a route
  * changes there is exactly one place to update.
- *
- * Where the calls go: every path starts with /api and has no site name in front, so the
- * browser sends it to the site the page came from. Next.js passes /api/... on to the
- * FastAPI server (`rewrites` in next.config.ts). Calling the API server's own address
- * from the page also works, but then the browser treats it as a second site and sends
- * an extra permission request (a CORS "preflight") before every save, which doubled
- * the waiting time on the hosted site.
  */
 
 import type {
@@ -29,6 +22,9 @@ import type {
   QuestionUpdate,
   ResponsesTable,
 } from "./types";
+
+// Set in .env.local for development and in Vercel for production.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /**
  * An error response from the API. Carries the HTTP status and, for a rejected form
@@ -52,7 +48,7 @@ export class ApiError extends Error {
  * this a 404 or 422 would look like success to the caller.
  */
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_URL}${path}`, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -184,7 +180,7 @@ export type ExportFormat = "csv" | "xlsx";
 export function responsesExportUrl(formId: number, format: ExportFormat, responseIds: number[]) {
   // The server reads a repeated parameter as a list: ?ids=4&ids=9
   const query = responseIds.map((id) => `ids=${id}`).join("&");
-  const address = `/api/forms/${formId}/responses.${format}`;
+  const address = `${API_URL}/api/forms/${formId}/responses.${format}`;
   return query === "" ? address : `${address}?${query}`;
 }
 
