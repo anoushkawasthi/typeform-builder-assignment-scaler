@@ -115,7 +115,10 @@ export function ChoiceEditor({
           <div className={isVertical ? "flex flex-col items-start gap-2" : HORIZONTAL_CHOICES_CLASSES}>
           {choices.map((choice, index) => (
             <ChoiceRow
-              key={choice.id}
+              // A choice added a moment ago is first shown under a temporary id, which
+              // stays its row key when the real id arrives (see use-form-editor.ts). The
+              // row is then not rebuilt, so the creator can keep typing in it.
+              key={choice.row_key ?? choice.id}
               choice={choice}
               letter={letterForIndex(index)}
               isVertical={isVertical}

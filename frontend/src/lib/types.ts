@@ -24,6 +24,13 @@ export type FormStatus = "draft" | "published";
 export interface Choice {
   id: number;
   label: string;
+  /**
+   * Only ever set by the builder, never sent by the server. A choice the builder showed
+   * before the server had created it keeps the temporary id it was first shown under
+   * here, so its row on screen stays the same row when the real id arrives
+   * (see use-form-editor.ts).
+   */
+  row_key?: number;
 }
 
 export type LogicOperator = "always" | "is" | "is_not" | "less_than" | "greater_than";
