@@ -13,7 +13,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import { getPublicForm, startResponse, submitResponse } from "@/lib/api";
+import { ApiError, getPublicForm, startResponse, submitResponse } from "@/lib/api";
 import type { AnswerPayload } from "@/lib/types";
 
 import { FormFlow } from "./form-flow";
@@ -43,14 +43,30 @@ export function PublicFormScreen({ publicId }: { publicId: string }) {
 
   function beginResponse(): Promise<string> {
     if (tokenPromiseRef.current === null) {
-      tokenPromiseRef.current = startResponse(publicId).then((result) => result.token);
+      const tokenPromise = startResponse(publicId).then((result) => result.token);
+      // If the request fails, forget the promise, so the next call asks again instead
+      // of being handed the same failure for ever.
+      tokenPromise.catch(() => {
+        tokenPromiseRef.current = null;
+      });
+      tokenPromiseRef.current = tokenPromise;
     }
     return tokenPromiseRef.current;
   }
 
   async function handleSubmit(answers: AnswerPayload[]) {
     const token = await beginResponse();
-    await submitResponse(token, answers);
+    try {
+      await submitResponse(token, answers);
+    } catch (error) {
+      // 409 = "this response was already submitted". That happens when an earlier try
+      // did reach the server but its reply was lost on the way back, so the answers are
+      // stored and the respondent should see the thank-you screen, not an error.
+      const wasAlreadyStored = error instanceof ApiError && error.status === 409;
+      if (!wasAlreadyStored) {
+        throw error;
+      }
+    }
   }
 
   // Typeform shows its loading screen for a beat even when the form arrives at once,

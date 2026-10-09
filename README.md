@@ -239,6 +239,11 @@ of a question that already has answers.
 - **Logic jumps** have one condition each, are checked top to bottom (first match
   wins), and can only jump forward or to the end. A question skipped by a jump is not
   required and any answer sent for it is discarded.
+- **A request that does not get through is tried again** (up to three times) when
+  repeating it is harmless: reads, and saves of an existing thing (`PATCH`, `PUT`).
+  Creating and deleting are not repeated automatically. A respondent whose Submit
+  reached the server but whose reply was lost sees the thank-you screen on the next
+  press, and the response is stored once.
 - **Mobile:** the public form is responsive; the builder is designed for desktop widths.
 - **Branding:** the layout and interaction patterns follow Typeform, but the name and
   mark are our own; no Typeform logos or assets are used.
@@ -263,4 +268,5 @@ With Docker instead: `cp .env.example .env && docker compose up -d --build` (the
 file then lives in the `sqlite-data` volume).
 
 **Frontend (Vercel).** Import the repository, set the root directory to `frontend`, and
-set `NEXT_PUBLIC_API_URL` to the backend's public address.
+set `NEXT_PUBLIC_API_URL` to the backend's public address. `frontend/vercel.json` runs
+the site's server code in Mumbai (the default is the eastern United States).

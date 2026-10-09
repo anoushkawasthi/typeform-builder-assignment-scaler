@@ -70,6 +70,13 @@ interface MenuItemProps {
 }
 
 export function MenuItem({ onSelect, isDanger = false, disabled = false, isSelected = false, children }: MenuItemProps) {
+  let textColour = "text-admin-muted ";
+  if (isDanger) {
+    textColour = "text-danger-text ";
+  } else if (isSelected) {
+    textColour = "text-admin-active ";
+  }
+
   return (
     <DropdownMenu.Item
       disabled={disabled}
@@ -77,7 +84,7 @@ export function MenuItem({ onSelect, isDanger = false, disabled = false, isSelec
       className={
         "flex h-8 shrink-0 cursor-pointer select-none items-center gap-[10px] rounded-lg pl-2 pr-3 text-[14px] outline-none " +
         "data-[highlighted]:bg-admin-hover data-[disabled]:cursor-default data-[disabled]:opacity-40 " +
-        (isDanger ? "text-danger-text " : isSelected ? "text-admin-active " : "text-admin-muted ") +
+        textColour +
         (isSelected ? "bg-admin-hover" : "")
       }
     >

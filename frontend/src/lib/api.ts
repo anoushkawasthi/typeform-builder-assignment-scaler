@@ -41,6 +41,52 @@ export class ApiError extends Error {
   }
 }
 
+// Requests that are safe to send a second time: reading twice, or saving the same change
+// twice, ends in the same state. POST and DELETE are left out on purpose: repeating a
+// POST could add a second question or a second response.
+const REPEATABLE_METHODS = ["GET", "PUT", "PATCH"];
+// What the hosting in front of the API answers when it could not reach the API just then.
+const UNREACHABLE_STATUSES = [502, 503, 504];
+const MAX_TRIES = 3;
+const WAIT_BETWEEN_TRIES_MS = 700;
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+/**
+ * `fetch`, tried again when the request did not get through.
+ *
+ * Why: the hosted API is reached through a tunnel that now and then drops a request or
+ * answers "502 Bad Gateway" (measured on the live site). Without a second try, a title
+ * typed at that moment was lost, and a public form could say it was not available. A
+ * request counts as "did not get through" when fetch throws (no answer at all) or the
+ * answer is one of UNREACHABLE_STATUSES. Any other answer, including a 404 or a
+ * validation error, is a real answer and is returned at once.
+ */
+async function fetchWithRetry(method: string, path: string, body?: unknown): Promise<Response> {
+  let triesLeft = REPEATABLE_METHODS.includes(method) ? MAX_TRIES : 1;
+
+  while (true) {
+    triesLeft -= 1;
+    try {
+      const response = await fetch(`${API_URL}${path}`, {
+        method,
+        headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      if (triesLeft === 0 || !UNREACHABLE_STATUSES.includes(response.status)) {
+        return response;
+      }
+    } catch (networkError) {
+      if (triesLeft === 0) {
+        throw networkError;
+      }
+    }
+    await wait(WAIT_BETWEEN_TRIES_MS);
+  }
+}
+
 /**
  * Send a request and return the parsed JSON.
  *
@@ -48,11 +94,7 @@ export class ApiError extends Error {
  * this a 404 or 422 would look like success to the caller.
  */
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  const response = await fetchWithRetry(method, path, body);
 
   // 204 No Content (used by DELETE) has no body to parse.
   if (response.status === 204) {

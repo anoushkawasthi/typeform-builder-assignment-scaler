@@ -260,6 +260,15 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
   // jumps is not only on the final question. It turns OK into Submit and switches off
   // the footer's "next" arrow.
   const isOnQuestion = !isFinished && !isOnWelcome && questions.length > 0;
+
+  // A name for the screen that is showing. The animation below treats a change of
+  // this name as "one screen leaves, another arrives".
+  let screenKey: string | number = "thank-you";
+  if (isOnWelcome) {
+    screenKey = "welcome";
+  } else if (!isFinished && questions.length > 0) {
+    screenKey = questions[currentIndex].id;
+  }
   const isLastQuestion =
     isOnQuestion && nextQuestionIndex(questions, currentIndex, answers[questions[currentIndex].id]) >= questions.length;
 
@@ -307,7 +316,7 @@ export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFl
             with the same rise-and-fade as every later question. */}
         <AnimatePresence custom={direction}>
           <motion.div
-            key={isFinished ? "thank-you" : isOnWelcome ? "welcome" : questions[currentIndex].id}
+            key={screenKey}
             custom={direction}
             variants={slideVariants}
             initial="enter"
