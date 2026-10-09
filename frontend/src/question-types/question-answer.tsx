@@ -52,10 +52,8 @@ const DEFAULT_PLACEHOLDERS: Partial<Record<QuestionType, string>> = {
 
 /** The creator's "Custom placeholder text" if there is one, otherwise the usual hint. */
 function placeholderFor(question: RenderableQuestion): string {
-  // TEMPORARY `?? ""`: until the live API is updated it does not send this field.
-  const customText = question.placeholder ?? "";
-  if (customText !== "") {
-    return customText;
+  if (question.placeholder !== "") {
+    return question.placeholder;
   }
   return DEFAULT_PLACEHOLDERS[question.type] ?? "";
 }

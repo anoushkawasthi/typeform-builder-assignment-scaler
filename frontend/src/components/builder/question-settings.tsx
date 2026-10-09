@@ -196,8 +196,7 @@ interface SettingProps {
 function PlaceholderSetting({ question, onUpdate }: SettingProps) {
   // On when there is saved text. Kept here as well as on the server because the switch
   // can be on while the box is still empty, and an empty text is not saved as "on".
-  // TEMPORARY `?? ""`: until the live API is updated it does not send this field.
-  const [isOn, setIsOn] = useState((question.placeholder ?? "") !== "");
+  const [isOn, setIsOn] = useState(question.placeholder !== "");
 
   function handleToggle(nextIsOn: boolean) {
     setIsOn(nextIsOn);
