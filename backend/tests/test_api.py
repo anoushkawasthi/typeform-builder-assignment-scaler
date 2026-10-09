@@ -7,6 +7,10 @@ import io
 from datetime import datetime
 
 from openpyxl import load_workbook
+from sqlalchemy import inspect, text
+
+from app import schemas
+from app.database import add_missing_columns, make_engine
 
 
 def test_create_rename_duplicate_delete_form(client):
@@ -409,3 +413,92 @@ def test_choices_can_be_reordered(client):
 
     incomplete = client.put(f"/api/questions/{question['id']}/choices/order", json={"choice_ids": ids[:2]})
     assert incomplete.status_code == 400
+
+
+def test_new_rating_question_starts_with_three_stars(client):
+    form = client.post("/api/forms", json={"title": "Rating"}).json()
+    form = client.post(f"/api/forms/{form['id']}/questions", json={"type": "rating"}).json()
+    assert form["questions"][0]["rating_max"] == 3
+    assert form["questions"][0]["rating_shape"] == "star"
+
+
+def test_display_settings_are_saved_published_and_copied(client):
+    form = client.post("/api/forms", json={"title": "Display"}).json()
+    client.post(f"/api/forms/{form['id']}/questions", json={"type": "multiple_choice"})
+    client.post(f"/api/forms/{form['id']}/questions", json={"type": "short_text"})
+    form = client.post(f"/api/forms/{form['id']}/questions", json={"type": "rating"}).json()
+    choice_question, text_question, rating_question = form["questions"]
+
+    # The defaults leave a question looking as it always did.
+    assert choice_question["randomize_choices"] is False
+    assert choice_question["choices_vertical"] is True
+    assert text_question["placeholder"] == ""
+
+    client.patch(f"/api/questions/{choice_question['id']}", json={"randomize_choices": True, "choices_vertical": False})
+    client.patch(f"/api/questions/{text_question['id']}", json={"placeholder": "Your full name"})
+    client.patch(f"/api/questions/{rating_question['id']}", json={"rating_shape": "heart"})
+
+    # A shape that is not on the list is refused.
+    bad = client.patch(f"/api/questions/{rating_question['id']}", json={"rating_shape": "banana"})
+    assert bad.status_code == 422
+
+    client.post(f"/api/forms/{form['id']}/publish")
+    public_questions = client.get(f"/api/public/forms/{form['public_id']}").json()["questions"]
+    assert public_questions[0]["randomize_choices"] is True
+    assert public_questions[0]["choices_vertical"] is False
+    assert public_questions[1]["placeholder"] == "Your full name"
+    assert public_questions[2]["rating_shape"] == "heart"
+
+    # Switching a setting back off must be saved too (False and "" are real values).
+    form = client.patch(f"/api/questions/{text_question['id']}", json={"placeholder": ""}).json()
+    assert form["questions"][1]["placeholder"] == ""
+
+    # Duplicating a question, or the whole form, keeps the settings.
+    form = client.post(f"/api/questions/{rating_question['id']}/duplicate").json()
+    assert form["questions"][3]["rating_shape"] == "heart"
+    copy = client.post(f"/api/forms/{form['id']}/duplicate").json()
+    assert copy["questions"][0]["randomize_choices"] is True
+    assert copy["questions"][0]["choices_vertical"] is False
+    assert copy["questions"][2]["rating_shape"] == "heart"
+
+
+def test_snapshot_published_before_the_display_settings_still_loads():
+    # What a question looked like in a snapshot saved by the older code.
+    old_question = {
+        "id": 1,
+        "type": "multiple_choice",
+        "title": "Pick one",
+        "description": "",
+        "is_required": False,
+        "allow_multiple": False,
+        "rating_max": 5,
+        "choices": [{"id": 1, "label": "Red"}],
+    }
+    question = schemas.PublicQuestionOut(**old_question)
+    assert question.randomize_choices is False
+    assert question.choices_vertical is True
+    assert question.placeholder == ""
+    assert question.rating_shape == "star"
+
+
+def test_columns_added_later_reach_an_older_database():
+    # A questions table as an older version of the code made it, with one row in it.
+    engine = make_engine("sqlite://", single_connection=True)
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE questions (id INTEGER PRIMARY KEY, title TEXT)"))
+        connection.execute(text("INSERT INTO questions (id, title) VALUES (1, 'Old question')"))
+
+    add_missing_columns(engine)
+    # Running it a second time must change nothing and must not fail.
+    add_missing_columns(engine)
+
+    column_names = [column["name"] for column in inspect(engine).get_columns("questions")]
+    for expected in ("rating_shape", "randomize_choices", "choices_vertical", "placeholder"):
+        assert expected in column_names
+
+    # The row that was already there got the defaults.
+    with engine.connect() as connection:
+        row = connection.execute(
+            text("SELECT rating_shape, randomize_choices, choices_vertical, placeholder FROM questions WHERE id = 1")
+        ).one()
+    assert tuple(row) == ("star", 0, 1, "")

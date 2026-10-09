@@ -54,6 +54,9 @@ def published_form(client):
             client.post(f"/api/questions/{question['id']}/choices", json={"label": "Blue"})
         if question["type"] in ("short_text", "email"):
             client.patch(f"/api/questions/{question['id']}", json={"is_required": True})
+        if question["type"] == "rating":
+            # A new rating question has 3 stars; the tests rate out of 5.
+            client.patch(f"/api/questions/{question['id']}", json={"rating_max": 5})
 
     client.post(f"/api/forms/{form_id}/publish")
     public_form = client.get(f"/api/public/forms/{form['public_id']}").json()

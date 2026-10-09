@@ -152,6 +152,10 @@ def duplicate_form(form_id: int, db: Session = Depends(get_db), creator: Creator
             position=position,
             allow_multiple=question.allow_multiple,
             rating_max=question.rating_max,
+            rating_shape=question.rating_shape,
+            randomize_choices=question.randomize_choices,
+            choices_vertical=question.choices_vertical,
+            placeholder=question.placeholder,
         )
         for choice_position, choice in enumerate(snapshot.active_choices(question)):
             choice_copy = QuestionChoice(label=choice.label, position=choice_position)

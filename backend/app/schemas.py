@@ -28,6 +28,27 @@ QuestionType = Literal[
     "rating",
 ]
 
+# The same list as RATING_SHAPES in models.py.
+RatingShape = Literal[
+    "star",
+    "heart",
+    "user",
+    "thumbs_up",
+    "crown",
+    "cat",
+    "dog",
+    "circle",
+    "flag",
+    "droplet",
+    "tick",
+    "lightbulb",
+    "trophy",
+    "cloud",
+    "thunderbolt",
+    "pencil",
+    "skull",
+]
+
 # ----------------------------------------------------------------------------------------
 # Questions and choices (creator side)
 # ----------------------------------------------------------------------------------------
@@ -86,6 +107,10 @@ class QuestionOut(BaseModel):
     position: int
     allow_multiple: bool
     rating_max: int
+    rating_shape: RatingShape
+    randomize_choices: bool
+    choices_vertical: bool
+    placeholder: str
     choices: list[ChoiceOut]
     logic_jumps: list[LogicJumpOut]
     # How many submitted answers this question has. The builder uses it to warn before
@@ -108,6 +133,10 @@ class QuestionUpdate(BaseModel):
     is_required: bool | None = None
     allow_multiple: bool | None = None
     rating_max: int | None = Field(default=None, ge=1, le=10)
+    rating_shape: RatingShape | None = None
+    randomize_choices: bool | None = None
+    choices_vertical: bool | None = None
+    placeholder: str | None = Field(default=None, max_length=255)
 
 
 class QuestionOrderIn(BaseModel):
@@ -225,6 +254,12 @@ class PublicQuestionOut(BaseModel):
     is_required: bool
     allow_multiple: bool
     rating_max: int
+    # The four display settings have defaults so that snapshots published before they
+    # existed still load, and look as they did.
+    rating_shape: RatingShape = "star"
+    randomize_choices: bool = False
+    choices_vertical: bool = True
+    placeholder: str = ""
     choices: list[ChoiceOut]
     # Empty by default so snapshots published before logic jumps existed still load.
     logic_jumps: list[LogicJumpOut] = []

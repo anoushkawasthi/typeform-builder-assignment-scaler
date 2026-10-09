@@ -108,7 +108,18 @@ def update_question(
         if becomes_choice_type and len(snapshot.active_choices(question)) == 0:
             question.choices.append(QuestionChoice(label="", position=0))
 
-    for field_name in ("title", "description", "is_required", "allow_multiple", "rating_max"):
+    simple_fields = (
+        "title",
+        "description",
+        "is_required",
+        "allow_multiple",
+        "rating_max",
+        "rating_shape",
+        "randomize_choices",
+        "choices_vertical",
+        "placeholder",
+    )
+    for field_name in simple_fields:
         new_value = changes.get(field_name)
         if new_value is not None:
             setattr(question, field_name, new_value)
@@ -145,6 +156,10 @@ def duplicate_question(
         is_required=original.is_required,
         allow_multiple=original.allow_multiple,
         rating_max=original.rating_max,
+        rating_shape=original.rating_shape,
+        randomize_choices=original.randomize_choices,
+        choices_vertical=original.choices_vertical,
+        placeholder=original.placeholder,
     )
     for position, choice in enumerate(snapshot.active_choices(original)):
         copy.choices.append(QuestionChoice(label=choice.label, position=position))

@@ -73,6 +73,10 @@ ADDED_COLUMNS = [
     ("forms", "welcome_title", "VARCHAR(255) NOT NULL DEFAULT ''"),
     ("forms", "welcome_text", "TEXT NOT NULL DEFAULT ''"),
     ("forms", "welcome_button_text", "VARCHAR(24) NOT NULL DEFAULT 'Start'"),
+    ("questions", "rating_shape", "VARCHAR(20) NOT NULL DEFAULT 'star'"),
+    ("questions", "randomize_choices", "BOOLEAN NOT NULL DEFAULT 0"),
+    ("questions", "choices_vertical", "BOOLEAN NOT NULL DEFAULT 1"),
+    ("questions", "placeholder", "VARCHAR(255) NOT NULL DEFAULT ''"),
 ]
 
 

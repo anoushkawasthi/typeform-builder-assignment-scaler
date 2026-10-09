@@ -93,6 +93,10 @@ def build_snapshot(form: Form) -> dict:
                 "is_required": question.is_required,
                 "allow_multiple": question.allow_multiple,
                 "rating_max": question.rating_max,
+                "rating_shape": question.rating_shape,
+                "randomize_choices": question.randomize_choices,
+                "choices_vertical": question.choices_vertical,
+                "placeholder": question.placeholder,
                 "choices": choice_dicts,
                 "logic_jumps": active_logic_jumps(question),
             }

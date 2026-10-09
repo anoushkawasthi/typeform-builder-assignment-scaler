@@ -43,6 +43,27 @@ QUESTION_TYPES = [
 # Types whose answer is one or more rows in question_choices.
 CHOICE_QUESTION_TYPES = ["multiple_choice", "dropdown"]
 
+# The pictures a rating question can be drawn with, in the order Typeform offers them.
+RATING_SHAPES = [
+    "star",
+    "heart",
+    "user",
+    "thumbs_up",
+    "crown",
+    "cat",
+    "dog",
+    "circle",
+    "flag",
+    "droplet",
+    "tick",
+    "lightbulb",
+    "trophy",
+    "cloud",
+    "thunderbolt",
+    "pencil",
+    "skull",
+]
+
 # Comparisons a logic jump can make. "always" ignores the answer.
 LOGIC_OPERATORS = ["always", "is", "is_not", "less_than", "greater_than"]
 
@@ -153,9 +174,22 @@ class Question(Base):
     is_required: Mapped[bool] = mapped_column(Boolean, default=False)
     position: Mapped[int] = mapped_column(Integer, default=0)
 
-    # Settings that only some types use. Kept as columns because there are only two.
+    # Settings that only some types use. Plain columns, one per setting, so each is
+    # visible in the schema; a type simply ignores the ones that are not its own.
     allow_multiple: Mapped[bool] = mapped_column(Boolean, default=False)  # multiple_choice
-    rating_max: Mapped[int] = mapped_column(Integer, default=5)  # rating
+    # A new rating question has 3 stars, as on Typeform.
+    rating_max: Mapped[int] = mapped_column(Integer, default=3)  # rating
+    rating_shape: Mapped[str] = mapped_column(String(20), default="star", server_default="star")  # rating
+
+    # The four settings below only change how a question is DRAWN. They never change
+    # which answers are valid or how an answer is stored.
+    # Show the choices in a new random order to each respondent (multiple_choice, dropdown).
+    randomize_choices: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    # True: choices in one column. False: side by side in up to three columns (multiple_choice).
+    choices_vertical: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    # Grey hint text in an empty field. Empty means "use the usual hint for this type"
+    # (short_text, long_text, email, number, dropdown).
+    placeholder: Mapped[str] = mapped_column(String(255), default="", server_default="")
 
     # Soft delete. Set when a question that respondents can still see (it is in the
     # published snapshot) is removed from the draft. The row is really deleted on the
