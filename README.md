@@ -19,7 +19,7 @@ The demo opens straight into the workspace of a default creator; there is no log
 | Frontend libraries | TanStack Query (API data), Motion (question transitions), dnd-kit (drag and drop), Radix Dialog and Dropdown Menu (accessible, unstyled primitives), React Flow (the Workflow chart), qrcode.react (the share QR code), Sonner (toasts), Lucide (icons) |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2, Pydantic 2, openpyxl (Excel export) |
 | Database | SQLite |
-| Tests | pytest (37 tests: validation rules, logic jumps and API routes) |
+| Tests | pytest (41 tests: validation rules, logic jumps and API routes) |
 | Hosting | Frontend on Vercel; backend as a systemd service on a VPS behind a Cloudflare Tunnel, SQLite on the server's disk (a Dockerfile and Compose file are included as an alternative) |
 
 ## Features
@@ -28,7 +28,9 @@ The demo opens straight into the workspace of a default creator; there is no log
 reorder and delete; eight question types (short text, long text, multiple choice,
 dropdown, email, number, yes/no, rating); required toggle and description per question;
 titles, descriptions and choices edited in place on a live canvas; a full Preview that
-saves nothing; everything autosaves.
+saves nothing; everything autosaves. Per-type display settings as on Typeform: choices in
+random order, choices side by side instead of in a column, a custom placeholder, and the
+number (1 to 10) and shape (stars, hearts and fifteen more) of a rating.
 
 **Form management** — list of forms with status, question count and response count;
 create, rename, duplicate, delete; publish and unpublish with a shareable link.
@@ -144,7 +146,7 @@ creators ──< forms ──< questions ──< question_choices
 |---|---|---|
 | `creators` | id, name, email (unique), created_at | Who owns forms. One seeded row. |
 | `forms` | id, creator_id → creators, public_id (unique), title, status, published_snapshot (JSON), published_at, theme_background_color, theme_question_color, theme_answer_color, theme_button_color, theme_button_text_color, theme_font, welcome_enabled, welcome_title, welcome_text, welcome_button_text, thank_you_title, thank_you_text, created_at, updated_at | A form. Its `questions` rows are the draft; `published_snapshot` is the live copy. |
-| `questions` | id, form_id → forms, type, title, description, is_required, position, allow_multiple, rating_max, deleted_at | One question; `position` is its order. |
+| `questions` | id, form_id → forms, type, title, description, is_required, position, allow_multiple, rating_max, rating_shape, randomize_choices, choices_vertical, placeholder, deleted_at | One question; `position` is its order. |
 | `question_choices` | id, question_id → questions, label, position, deleted_at | Options of multiple-choice and dropdown questions. |
 | `logic_jumps` | id, question_id → questions, position, operator, compare_choice_id → question_choices, compare_number, compare_boolean, target_question_id → questions | One rule: "if the answer `operator` `compare value`, go to `target`". An empty target means the end of the form. |
 | `responses` | id, form_id → forms, token (unique), started_at, submitted_at | One person's pass through a form. Created on start; `submitted_at` empty means abandoned. |
@@ -229,7 +231,11 @@ of a question that already has answers.
 - **Multiple choice** is single-select by default with a "Multiple selection" toggle;
   dropdown is always single-select.
 - **Number questions** accept any finite number (Typeform's accept only whole numbers).
-- **Rating** is stars, 3 to 10, default 5.
+- **Rating** has 1 to 10 steps, 3 by default as on Typeform, drawn as stars or one of
+  sixteen other shapes.
+- **Random order of choices** is decided in the respondent's browser when the form
+  opens and stays fixed while they fill it in. Answers, logic and results refer to a
+  choice by its id, so the order on screen never affects what is stored.
 - **Logic jumps** have one condition each, are checked top to bottom (first match
   wins), and can only jump forward or to the end. A question skipped by a jump is not
   required and any answer sent for it is discarded.

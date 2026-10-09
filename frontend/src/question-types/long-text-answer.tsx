@@ -14,7 +14,11 @@ import { useEffect, useRef } from "react";
 import type { QuestionAnswerProps } from "./question-answer";
 import { UNDERLINED_FIELD_CLASSES } from "./text-answer";
 
-export function LongTextAnswer({ value, onChange, isActive, isInteractive }: QuestionAnswerProps) {
+interface LongTextAnswerProps extends QuestionAnswerProps {
+  placeholder: string;
+}
+
+export function LongTextAnswer({ value, onChange, isActive, isInteractive, placeholder }: LongTextAnswerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const text = value?.text ?? "";
 
@@ -40,7 +44,7 @@ export function LongTextAnswer({ value, onChange, isActive, isInteractive }: Que
         ref={textareaRef}
         rows={1}
         value={text}
-        placeholder="Type your answer here..."
+        placeholder={placeholder}
         readOnly={!isInteractive}
         tabIndex={isInteractive && isActive ? 0 : -1}
         onChange={(event) => onChange({ text: event.target.value })}

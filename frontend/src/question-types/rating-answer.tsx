@@ -1,24 +1,21 @@
 "use client";
 
 /**
- * rating-answer.tsx — a row of stars.
+ * rating-answer.tsx — a row of stars (or hearts, crowns, ...).
  *
- * What it does:   draws `rating_max` stars with their numbers underneath; clicking star
- *                 N (or pressing the number key N) fills stars 1 to N.
- * Depends on:     question-answer.tsx (props).
+ * What it does:   draws `rating_max` shapes with their numbers underneath; clicking
+ *                 shape N (or pressing the number key N) fills shapes 1 to N.
+ * Depends on:     question-answer.tsx (props), rating-shapes.tsx (the drawings).
  * Depended on by: question-answer.tsx.
  */
 
 import { useEffect, useState } from "react";
 
 import type { QuestionAnswerProps } from "./question-answer";
-
-// A five-pointed star drawn in a 56x56 box.
-const STAR_PATH =
-  "M28 4.5l7.1 17.4 18.7 1.5-14.2 12.2 4.4 18.3L28 44.1 12 53.9l4.4-18.3L2.2 23.4l18.7-1.5L28 4.5z";
+import { RatingShapeIcon } from "./rating-shapes";
 
 export function RatingAnswer({ question, value, onChange, isActive, isInteractive }: QuestionAnswerProps) {
-  // The star the mouse is over, so the row can preview the rating before a click.
+  // The shape the mouse is over, so the row can preview the rating before a click.
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
 
   const currentRating = value?.number ?? 0;
@@ -73,17 +70,7 @@ export function RatingAnswer({ question, value, onChange, isActive, isInteractiv
             onClick={() => isInteractive && onChange({ number: rating })}
             className={"flex w-10 flex-col items-center @2xl:w-14 " + (isInteractive ? "cursor-pointer" : "cursor-default")}
           >
-            <svg viewBox="0 0 56 56" className="h-10 w-10 @2xl:h-14 @2xl:w-14" aria-hidden="true">
-              <path
-                d={STAR_PATH}
-                strokeWidth="2.5"
-                strokeLinejoin="round"
-                className={
-                  "transition-[fill,stroke] duration-200 ease-form " +
-                  (isFilled ? "fill-form-answer-30 stroke-form-answer" : "fill-transparent stroke-form-answer-60")
-                }
-              />
-            </svg>
+            <RatingShapeIcon shape={question.rating_shape} isFilled={isFilled} />
             <span className="mt-4 font-form text-[16px] leading-[22px] text-form-answer-80 @2xl:mt-6">{rating}</span>
           </button>
         );

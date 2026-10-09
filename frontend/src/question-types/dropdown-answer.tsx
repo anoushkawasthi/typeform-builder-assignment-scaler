@@ -24,7 +24,20 @@ import type { Choice } from "@/lib/types";
 import type { QuestionAnswerProps } from "./question-answer";
 import { UNDERLINED_FIELD_CLASSES } from "./text-answer";
 
-export function DropdownAnswer({ question, value, onChange, onCommit, isActive, isInteractive }: QuestionAnswerProps) {
+interface DropdownAnswerProps extends QuestionAnswerProps {
+  /** Shown in the closed field and in the search box while nothing is picked or typed. */
+  placeholder: string;
+}
+
+export function DropdownAnswer({
+  question,
+  value,
+  onChange,
+  onCommit,
+  isActive,
+  isInteractive,
+  placeholder,
+}: DropdownAnswerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchText, setSearchText] = useState("");
@@ -66,7 +79,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
   }, [isOpen]);
 
   // While closed: a typed letter or digit opens the panel and becomes the first
-  // character of the search, so "Type or select an option" is literally true.
+  // character of the search, so the hint "Type or select an option" is literally true.
   useEffect(() => {
     if (!isActive || !isInteractive || isOpen) {
       return;
@@ -140,7 +153,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
           (isInteractive ? "cursor-pointer" : "cursor-default")
         }
       >
-        {selectedChoice === undefined ? "Type or select an option" : stripFormatting(selectedChoice.label)}
+        {selectedChoice === undefined ? placeholder : stripFormatting(selectedChoice.label)}
         <ChevronDown aria-hidden="true" className="absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-form-answer" />
       </button>
 
@@ -160,7 +173,7 @@ export function DropdownAnswer({ question, value, onChange, onCommit, isActive, 
               aria-expanded={true}
               aria-controls={`dropdown-options-${question.id}`}
               value={searchText}
-              placeholder="Type or select an option"
+              placeholder={placeholder}
               onChange={(event) => {
                 setSearchText(event.target.value);
                 setHighlightedIndex(0);

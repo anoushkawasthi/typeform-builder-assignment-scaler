@@ -3,12 +3,14 @@
 /**
  * choice-editor.tsx — editing the options of a multiple-choice or dropdown question.
  *
- * What it does:   shows each choice as an editable box with its letter key. Hovering a
+ * What it does:   shows each choice as an editable box with its letter key, in one
+ *                 column or side by side (the "Vertical alignment" setting). Hovering a
  *                 choice reveals a drag handle on its left (to reorder) and round
  *                 buttons on its right (remove; open branching). "Add choice" is a link
  *                 underneath.
  * Depends on:     @dnd-kit (drag and drop), ui/autosave-text.tsx, lib/types.ts,
- *                 canvas-frame.tsx (the scale the canvas is drawn at).
+ *                 canvas-frame.tsx (the scale the canvas is drawn at),
+ *                 question-types/choice-answer.tsx (the side-by-side column rule).
  * Depended on by: question-canvas.tsx.
  *
  * Each edit is its own request (add one, rename one, remove one, reorder). Sending the
@@ -17,18 +19,27 @@
 
 import { DndContext, type DragEndEvent, type Modifier, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GitBranch, GripVertical, X } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { AutosaveText } from "@/components/ui/autosave-text";
 import type { Choice } from "@/lib/types";
+import { HORIZONTAL_CHOICES_CLASSES } from "@/question-types/choice-answer";
 
 import { CanvasScaleContext } from "./canvas-frame";
 
 interface ChoiceEditorProps {
   choices: Choice[];
+  /** True: one column. False: side by side, as the form will show them. */
+  isVertical: boolean;
   onAdd: () => void;
   onRename: (choiceId: number, label: string) => void;
   onRemove: (choiceId: number) => void;
@@ -44,7 +55,15 @@ function letterForIndex(index: number): string {
 const ROUND_BUTTON_CLASSES =
   "flex h-7 w-7 items-center justify-center rounded-full border border-form-answer-60 bg-form-bg text-form-answer hover:bg-form-answer-10";
 
-export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, onOpenLogic }: ChoiceEditorProps) {
+export function ChoiceEditor({
+  choices,
+  isVertical,
+  onAdd,
+  onRename,
+  onRemove,
+  onReorder,
+  onOpenLogic,
+}: ChoiceEditorProps) {
   // After "Add choice" the new box should take focus. We remember how many choices
   // there were when the button was pressed; the first box beyond that count is new.
   const [focusFromIndex, setFocusFromIndex] = useState<number | null>(null);
@@ -56,8 +75,14 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, on
   const canvasScale = useContext(CanvasScaleContext);
   const compensateForCanvasScale: Modifier = ({ transform }) => ({
     ...transform,
+    x: transform.x / canvasScale,
     y: transform.y / canvasScale,
   });
+
+  // In one column a choice can only move up and down. Side by side it moves freely,
+  // and the others make room row by row instead of only above and below.
+  const dragModifiers = isVertical ? [restrictToVerticalAxis, compensateForCanvasScale] : [compensateForCanvasScale];
+  const sortingStrategy = isVertical ? verticalListSortingStrategy : rectSortingStrategy;
 
   // A drag starts only after 5px of movement, so a click on the handle does nothing.
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -84,19 +109,16 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, on
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis, compensateForCanvasScale]}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={choices.map((choice) => choice.id)} strategy={verticalListSortingStrategy}>
+    <div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={dragModifiers} onDragEnd={handleDragEnd}>
+        <SortableContext items={choices.map((choice) => choice.id)} strategy={sortingStrategy}>
+          <div className={isVertical ? "flex flex-col items-start gap-2" : HORIZONTAL_CHOICES_CLASSES}>
           {choices.map((choice, index) => (
             <ChoiceRow
               key={choice.id}
               choice={choice}
               letter={letterForIndex(index)}
+              isVertical={isVertical}
               shouldFocus={focusFromIndex !== null && index >= focusFromIndex}
               canRemoveWithBackspace={choices.length > 1}
               onRename={(label) => onRename(choice.id, label)}
@@ -105,13 +127,14 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, on
               onOpenLogic={onOpenLogic}
             />
           ))}
+          </div>
         </SortableContext>
       </DndContext>
 
       <button
         type="button"
         onClick={addChoice}
-        className="mt-2 font-form text-[16px] leading-[22px] text-form-question-80 underline underline-offset-2"
+        className="mt-4 font-form text-[16px] leading-[22px] text-form-question-80 underline underline-offset-2"
       >
         Add choice
       </button>
@@ -122,6 +145,7 @@ export function ChoiceEditor({ choices, onAdd, onRename, onRemove, onReorder, on
 interface ChoiceRowProps {
   choice: Choice;
   letter: string;
+  isVertical: boolean;
   shouldFocus: boolean;
   canRemoveWithBackspace: boolean;
   onRename: (label: string) => void;
@@ -133,6 +157,7 @@ interface ChoiceRowProps {
 function ChoiceRow({
   choice,
   letter,
+  isVertical,
   shouldFocus,
   canRemoveWithBackspace,
   onRename,
@@ -147,29 +172,52 @@ function ChoiceRow({
   });
 
   // The controls appear on hover, while the row has focus, and while it is dragged.
-  const controlVisibility = isDragging ? "opacity-100" : "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100";
+  // While hidden they also ignore the mouse: side by side they lie over the
+  // neighbouring choices, and an invisible button must not swallow a click meant for
+  // the choice underneath it.
+  const controlVisibility = isDragging
+    ? "opacity-100"
+    : "pointer-events-none opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 " +
+      "group-hover:pointer-events-auto group-hover:opacity-100";
+
+  // Where the row, the handle and the buttons sit differs between the two layouts.
+  //   One column:   the row is widened to the left (negative margin plus padding) to make
+  //                 room for the handle, and the buttons simply follow the box.
+  //   Side by side: there is no free room between the columns, so the handle and the
+  //                 buttons float over the neighbours, as on Typeform. Their padding
+  //                 fills the gap up to the box, so the pointer can travel from the box
+  //                 to them without ever leaving the row (which would hide them).
+  //                 The row under the pointer is raised above one that merely has the
+  //                 cursor in its text, so its own controls are never covered.
+  const rowLayout = isVertical ? "-ml-11 gap-3 pl-11" : "hover:z-20 focus-within:z-10";
+  const handleLayout = isVertical ? "left-0" : "right-full pr-3";
+  const boxWidth = isVertical ? "w-[256px]" : "w-full min-w-0";
+  const buttonsLayout = isVertical ? "" : "absolute left-full h-full pl-3";
 
   return (
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      // The negative margin makes room for the handle to the left of the box without
-      // shifting the box itself out of line with the question title.
-      className={"group relative -ml-11 flex items-center gap-3 pl-11 " + (isDragging ? "z-10" : "")}
+      className={`group relative flex items-center ${rowLayout} ` + (isDragging ? "z-10" : "")}
     >
-      <button
-        type="button"
-        ref={setActivatorNodeRef}
-        {...attributes}
-        {...listeners}
-        aria-label={`Drag choice ${letter} to reorder`}
-        style={{ cursor: "grab" }}
-        className={`absolute left-0 flex h-8 w-8 touch-none items-center justify-center rounded-lg border border-form-answer-60 bg-form-bg text-form-answer ${controlVisibility}`}
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      <div className={`absolute flex h-full items-center ${handleLayout} ${controlVisibility}`}>
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag choice ${letter} to reorder`}
+          style={{ cursor: "grab" }}
+          className="flex h-8 w-8 touch-none items-center justify-center rounded-lg border border-form-answer-60 bg-form-bg text-form-answer"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      </div>
 
-      <div className="flex min-h-[38px] w-[256px] items-center gap-2 rounded-lg bg-form-answer-6 px-[10px] py-[4px] shadow-[0_0_0_1px_color-mix(in_srgb,var(--form-answer)_10%,transparent)]">
+      <div
+        // 44px tall, like the box the respondent sees (and like Typeform's editor).
+        className={`flex min-h-[44px] items-center gap-2 rounded-lg bg-form-answer-6 px-[10px] py-[6px] shadow-[0_0_0_1px_color-mix(in_srgb,var(--form-answer)_10%,transparent)] ${boxWidth}`}
+      >
         <span
           aria-hidden="true"
           className="flex h-6 min-w-6 items-center justify-center rounded-[4px] border border-form-answer-24 bg-form-bg px-[6px] text-[12px] font-semibold leading-none text-form-answer"
@@ -190,7 +238,7 @@ function ChoiceRow({
         />
       </div>
 
-      <div className={`flex items-center gap-1 ${controlVisibility}`}>
+      <div className={`flex items-center gap-1 ${buttonsLayout} ${controlVisibility}`}>
         <button type="button" aria-label={`Remove choice ${letter}`} title="Remove" onClick={onRemove} className={ROUND_BUTTON_CLASSES}>
           <X className="h-3.5 w-3.5" />
         </button>

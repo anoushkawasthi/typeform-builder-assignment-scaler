@@ -2,22 +2,33 @@
  * toggle.tsx — an on/off switch with its label.
  *
  * What it does:   the small pill switch used in the builder's settings panel.
- * Depends on:     nothing.
+ * Depends on:     lucide-react (the "i" icon).
  * Depended on by: components/builder/question-settings.tsx.
  */
+
+import { Info } from "lucide-react";
 
 interface ToggleProps {
   label: string;
   isOn: boolean;
   onChange: (isOn: boolean) => void;
   disabled?: boolean;
+  /** A sentence explaining the setting, shown when the small "i" beside the label is hovered. */
+  hint?: string;
 }
 
-export function Toggle({ label, isOn, onChange, disabled = false }: ToggleProps) {
+export function Toggle({ label, isOn, onChange, disabled = false, hint }: ToggleProps) {
   return (
     // The whole row is the click target, not just the 28px switch.
     <label className={"flex h-10 items-center justify-between gap-3 " + (disabled ? "opacity-40" : "cursor-pointer")}>
-      <span className="text-admin-muted">{label}</span>
+      <span className="flex items-center gap-1 text-admin-muted">
+        {label}
+        {hint !== undefined && (
+          <span title={hint} className="flex">
+            <Info aria-hidden="true" className="h-3 w-3" />
+          </span>
+        )}
+      </span>
       <button
         type="button"
         role="switch"

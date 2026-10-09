@@ -94,6 +94,11 @@ export function QuestionCanvas({
             isChoiceType(question.type) ? (
               <ChoiceEditor
                 choices={question.choices}
+                // Only a multiple-choice question can lay its choices side by side; a
+                // dropdown's list is always one column.
+                // TEMPORARY `!== false` (instead of the plain value): until the live API
+                // is updated it does not send this field, and missing must mean "one column".
+                isVertical={question.type !== "multiple_choice" || question.choices_vertical !== false}
                 onAdd={onAddChoice}
                 onRename={onRenameChoice}
                 onRemove={onRemoveChoice}

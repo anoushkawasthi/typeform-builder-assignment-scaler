@@ -8,7 +8,7 @@
  *                 validates before moving on, and submits at the end.
  * Depends on:     question-screen.tsx, form-theme.tsx, thank-you-screen.tsx,
  *                 progress-bar.tsx, flow-footer.tsx, lib/validation.ts, lib/logic.ts,
- *                 motion.
+ *                 lib/shuffle.ts, motion.
  * Depended on by: public-form-screen.tsx (the real form) and
  *                 components/builder/preview-screen.tsx (the builder's preview).
  *
@@ -21,6 +21,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { AnswerError, AnswerMap, AnswerPayload, AnswerValue, FillableForm } from "@/lib/types";
 import { nextQuestionIndex, visitedIndexes } from "@/lib/logic";
+import { withRandomizedChoices } from "@/lib/shuffle";
 import { isAnswerEmpty, toAnswerPayloads, validateAnswer } from "@/lib/validation";
 
 import { FlowFooter } from "./flow-footer";
@@ -65,7 +66,10 @@ function hasAnswerErrors(error: unknown): error is { answerErrors: AnswerError[]
 }
 
 export function FormFlow({ form, onStart, onSubmit, isEmbedded = false }: FormFlowProps) {
-  const questions = form.questions;
+  // Shuffled once, when the form opens: a "Randomize" question shows its choices in a
+  // new order to each respondent, but the order must not change again while they are
+  // filling it in (going back to a question would otherwise move its choices around).
+  const [questions] = useState(() => withRandomizedChoices(form.questions));
 
   const welcome = form.welcome ?? null;
 

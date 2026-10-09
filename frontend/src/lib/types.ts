@@ -54,6 +54,26 @@ export interface Theme {
   font: string;
 }
 
+/** The pictures a rating question can be drawn with. Same list as the server's RATING_SHAPES. */
+export type RatingShape =
+  | "star"
+  | "heart"
+  | "user"
+  | "thumbs_up"
+  | "crown"
+  | "cat"
+  | "dog"
+  | "circle"
+  | "flag"
+  | "droplet"
+  | "tick"
+  | "lightbulb"
+  | "trophy"
+  | "cloud"
+  | "thunderbolt"
+  | "pencil"
+  | "skull";
+
 /**
  * The parts of a question that decide how it is drawn and answered. Both the builder's
  * draft question and the published question have these, so the shared question
@@ -67,6 +87,13 @@ export interface RenderableQuestion {
   is_required: boolean;
   allow_multiple: boolean;
   rating_max: number;
+  rating_shape: RatingShape;
+  /** Show the choices in a new random order to each respondent. */
+  randomize_choices: boolean;
+  /** True: choices in one column. False: side by side. Multiple choice only. */
+  choices_vertical: boolean;
+  /** The grey hint in an empty field. Empty means "the usual hint for this type". */
+  placeholder: string;
   choices: Choice[];
   logic_jumps: LogicJump[];
 }
@@ -149,6 +176,10 @@ export interface QuestionUpdate {
   is_required?: boolean;
   allow_multiple?: boolean;
   rating_max?: number;
+  rating_shape?: RatingShape;
+  randomize_choices?: boolean;
+  choices_vertical?: boolean;
+  placeholder?: string;
 }
 
 /** What the respondent flow needs. The public API and the builder preview both produce it. */

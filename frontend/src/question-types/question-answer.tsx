@@ -14,7 +14,7 @@
  * about how a question looks.
  */
 
-import type { AnswerValue, RenderableQuestion } from "@/lib/types";
+import type { AnswerValue, QuestionType, RenderableQuestion } from "@/lib/types";
 
 import { ChoiceAnswer } from "./choice-answer";
 import { DropdownAnswer } from "./dropdown-answer";
@@ -41,21 +41,41 @@ export interface QuestionAnswerProps {
 const YES_CHOICE_ID = 1;
 const NO_CHOICE_ID = 0;
 
+// The grey hint each type shows in an empty field, unless the creator wrote their own.
+const DEFAULT_PLACEHOLDERS: Partial<Record<QuestionType, string>> = {
+  short_text: "Type your answer here...",
+  long_text: "Type your answer here...",
+  email: "name@example.com",
+  number: "Type your answer here...",
+  dropdown: "Type or select an option",
+};
+
+/** The creator's "Custom placeholder text" if there is one, otherwise the usual hint. */
+function placeholderFor(question: RenderableQuestion): string {
+  // TEMPORARY `?? ""`: until the live API is updated it does not send this field.
+  const customText = question.placeholder ?? "";
+  if (customText !== "") {
+    return customText;
+  }
+  return DEFAULT_PLACEHOLDERS[question.type] ?? "";
+}
+
 export function QuestionAnswer(props: QuestionAnswerProps) {
   const { question, value, onChange } = props;
+  const placeholder = placeholderFor(question);
 
   switch (question.type) {
     case "short_text":
-      return <TextAnswer {...props} inputType="text" placeholder="Type your answer here..." />;
+      return <TextAnswer {...props} inputType="text" placeholder={placeholder} />;
 
     case "email":
-      return <TextAnswer {...props} inputType="email" placeholder="name@example.com" />;
+      return <TextAnswer {...props} inputType="email" placeholder={placeholder} />;
 
     case "number":
-      return <TextAnswer {...props} inputType="number" placeholder="Type your answer here..." />;
+      return <TextAnswer {...props} inputType="number" placeholder={placeholder} />;
 
     case "long_text":
-      return <LongTextAnswer {...props} />;
+      return <LongTextAnswer {...props} placeholder={placeholder} />;
 
     case "multiple_choice":
       return (
@@ -64,6 +84,7 @@ export function QuestionAnswer(props: QuestionAnswerProps) {
           choices={question.choices}
           selectedIds={value?.choice_ids ?? []}
           allowMultiple={question.allow_multiple}
+          isVertical={question.choices_vertical}
           onSelect={(choiceIds) => onChange({ choice_ids: choiceIds })}
         />
       );
@@ -91,7 +112,7 @@ export function QuestionAnswer(props: QuestionAnswerProps) {
     }
 
     case "dropdown":
-      return <DropdownAnswer {...props} />;
+      return <DropdownAnswer {...props} placeholder={placeholder} />;
 
     case "rating":
       return <RatingAnswer {...props} />;

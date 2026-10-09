@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * choice-answer.tsx — a vertical list of pickable boxes with keyboard shortcuts.
+ * choice-answer.tsx — a list of pickable boxes with keyboard shortcuts.
  *
  * What it does:   draws the choices of a multiple-choice question (keys A, B, C...) and
  *                 of a Yes/No question (keys Y, N), handles clicks and letter keys, and
@@ -26,7 +26,18 @@ interface ChoiceAnswerProps extends QuestionAnswerProps {
   onSelect: (choiceIds: number[]) => void;
   /** Shortcut key for each choice, in order. Defaults to A, B, C... */
   keys?: string[];
+  /** True (default): one column. False: side by side (the "Vertical alignment" setting off). */
+  isVertical?: boolean;
 }
+
+// One column: as wide as the longest choice, but at least 256px on wide screens.
+export const VERTICAL_CHOICES_CLASSES = "flex w-full flex-col items-stretch gap-2 @2xl:inline-flex @2xl:w-auto @2xl:min-w-[256px]";
+
+// Side by side, Typeform's rule: as many equal columns as fit, never more than three
+// (a column is at least a third of the width) and never narrower than 200px. Phones
+// keep one column.
+export const HORIZONTAL_CHOICES_CLASSES =
+  "grid w-full grid-cols-1 gap-2 @2xl:grid-cols-[repeat(auto-fit,minmax(max(200px,calc(33.33%_-_6px)),1fr))]";
 
 // How long the picked choice blinks before the form moves on. Long enough to see what
 // you picked, short enough not to feel slow.
@@ -43,6 +54,7 @@ export function ChoiceAnswer({
   onSelect,
   onCommit,
   keys,
+  isVertical = true,
   isActive,
   isInteractive,
 }: ChoiceAnswerProps) {
@@ -121,7 +133,7 @@ export function ChoiceAnswer({
 
       <div
         role={allowMultiple ? "group" : "radiogroup"}
-        className="flex w-full flex-col items-stretch gap-2 @2xl:inline-flex @2xl:w-auto @2xl:min-w-[256px]"
+        className={isVertical ? VERTICAL_CHOICES_CLASSES : HORIZONTAL_CHOICES_CLASSES}
       >
         {choices.map((choice, index) => {
           const isSelected = selectedIds.includes(choice.id);
