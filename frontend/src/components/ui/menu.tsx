@@ -18,6 +18,10 @@ interface MenuProps {
   align?: "start" | "end";
   /** Which side of the trigger the menu opens on. Defaults to below it. */
   side?: "bottom" | "right";
+  /** Gap between the trigger and the menu, in pixels. Defaults to 4. */
+  sideOffset?: number;
+  /** Shifts the menu along the trigger's edge (negative = up, for a menu at the side). */
+  alignOffset?: number;
   /**
    * Size and inner spacing of the pop-up. The default suits a list of actions; a picker
    * with small items (a short list of numbers, a grid of icons) passes its own.
@@ -26,7 +30,15 @@ interface MenuProps {
   children: ReactNode;
 }
 
-export function Menu({ trigger, align = "end", side = "bottom", sizeClassName = "min-w-[202px] p-2", children }: MenuProps) {
+export function Menu({
+  trigger,
+  align = "end",
+  side = "bottom",
+  sideOffset = 4,
+  alignOffset = 0,
+  sizeClassName = "min-w-[202px] p-2",
+  children,
+}: MenuProps) {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
@@ -34,9 +46,11 @@ export function Menu({ trigger, align = "end", side = "bottom", sizeClassName = 
         <DropdownMenu.Content
           align={align}
           side={side}
-          sideOffset={side === "right" ? 12 : 4}
+          sideOffset={sideOffset}
+          alignOffset={alignOffset}
           // Typeform's menus have a thin border and a soft 3px ring instead of a drop shadow.
-          className={`z-50 rounded-xl border border-admin-border bg-white shadow-[0_0_0_3px_var(--color-admin-ring)] ${sizeClassName}`}
+          // Items are stacked 4px apart, as Typeform's are.
+          className={`z-50 flex flex-col gap-1 rounded-xl border border-admin-border bg-white shadow-[0_0_0_3px_var(--color-admin-ring)] ${sizeClassName}`}
         >
           {children}
         </DropdownMenu.Content>
@@ -61,7 +75,7 @@ export function MenuItem({ onSelect, isDanger = false, disabled = false, isSelec
       disabled={disabled}
       onSelect={onSelect}
       className={
-        "flex h-9 cursor-pointer select-none items-center gap-2 rounded-lg pl-2 pr-3 text-[14px] outline-none " +
+        "flex h-8 shrink-0 cursor-pointer select-none items-center gap-[10px] rounded-lg pl-2 pr-3 text-[14px] outline-none " +
         "data-[highlighted]:bg-admin-hover data-[disabled]:cursor-default data-[disabled]:opacity-40 " +
         (isDanger ? "text-danger-text " : isSelected ? "text-admin-active " : "text-admin-muted ") +
         (isSelected ? "bg-admin-hover" : "")
@@ -103,5 +117,5 @@ export function MenuIconItem({ label, isSelected, onSelect, children }: MenuIcon
 
 /** A thin line between groups of menu items. */
 export function MenuSeparator() {
-  return <DropdownMenu.Separator className="mx-2 my-2 h-px bg-admin-border" />;
+  return <DropdownMenu.Separator className="mx-2 my-[6px] h-px shrink-0 bg-admin-border" />;
 }

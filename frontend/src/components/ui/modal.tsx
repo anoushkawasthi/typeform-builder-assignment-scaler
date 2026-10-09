@@ -31,6 +31,19 @@ interface ModalProps {
    * the large dialogs.
    */
   tone?: "white" | "panel";
+  /**
+   * Replaces the title row with this content (a strip of tabs, or a larger title) and
+   * a small close button in the top right corner. The dialog then has no padding of
+   * its own, so the content can run to its edges. `title` is still needed: screen
+   * readers announce it.
+   */
+  header?: ReactNode;
+  /**
+   * Tailwind height classes for a dialog of a set height (the default is as tall as
+   * its content, up to 90% of the window). The dialog then lays its content out as a
+   * column, so one part of it can be told to fill the spare height.
+   */
+  heightClass?: string;
   children: ReactNode;
 }
 
@@ -41,8 +54,18 @@ export function Modal({
   description,
   widthClass = "max-w-[440px]",
   tone = "white",
+  header,
+  heightClass,
   children,
 }: ModalProps) {
+  const hasHeaderStrip = header !== undefined;
+  let surfaceClasses = "bg-admin-panel p-6 ";
+  if (hasHeaderStrip) {
+    surfaceClasses = "bg-admin-panel ";
+  } else if (tone === "white") {
+    surfaceClasses = "bg-white p-8 ";
+  }
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -63,30 +86,45 @@ export function Modal({
             }
           }}
           className={
-            "fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 " +
+            "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 " +
             "overflow-y-auto rounded-2xl shadow-[0_0_0_3px_var(--color-admin-ring)] " +
-            (tone === "white" ? "bg-white p-8 " : "bg-admin-panel p-6 ") +
+            (heightClass === undefined ? "max-h-[90vh] " : `flex flex-col ${heightClass} `) +
+            surfaceClasses +
             widthClass
           }
         >
-          <div className="mb-4 flex items-start justify-between gap-4">
-            <div>
-              <Dialog.Title className="text-[21px] font-normal leading-7 text-admin-text">{title}</Dialog.Title>
-              {description !== undefined && (
-                <Dialog.Description id="modal-description" className="mt-3 whitespace-pre-line text-admin-muted">
-                  {description}
-                </Dialog.Description>
-              )}
+          {hasHeaderStrip ? (
+            <div className="relative shrink-0">
+              {/* Not shown, but announced by screen readers as the dialog's name. */}
+              <Dialog.Title className="sr-only">{title}</Dialog.Title>
+              {header}
+              <Dialog.Close
+                aria-label="Close"
+                className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-md text-admin-muted hover:bg-admin-hover focus-visible:bg-admin-hover focus-visible:outline-none"
+              >
+                <X className="h-4 w-4" />
+              </Dialog.Close>
             </div>
-            <Dialog.Close
-              aria-label="Close"
-              // Radix moves keyboard focus to this button when the dialog opens. The grey
-              // background marks it; the heavy outline would draw the eye to "close".
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover focus-visible:bg-admin-hover focus-visible:outline-none"
-            >
-              <X className="h-4 w-4" />
-            </Dialog.Close>
-          </div>
+          ) : (
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div>
+                <Dialog.Title className="text-[21px] font-normal leading-7 text-admin-text">{title}</Dialog.Title>
+                {description !== undefined && (
+                  <Dialog.Description id="modal-description" className="mt-3 whitespace-pre-line text-admin-muted">
+                    {description}
+                  </Dialog.Description>
+                )}
+              </div>
+              <Dialog.Close
+                aria-label="Close"
+                // Radix moves keyboard focus to this button when the dialog opens. The grey
+                // background marks it; the heavy outline would draw the eye to "close".
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover focus-visible:bg-admin-hover focus-visible:outline-none"
+              >
+                <X className="h-4 w-4" />
+              </Dialog.Close>
+            </div>
+          )}
           {children}
         </Dialog.Content>
       </Dialog.Portal>

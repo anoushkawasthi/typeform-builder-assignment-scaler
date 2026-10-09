@@ -16,7 +16,7 @@
  */
 
 import { Bold, Italic } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { toggleMarker } from "@/lib/formatted-text";
 
@@ -83,7 +83,11 @@ export function AutosaveText({
     }
   }, [text]);
 
-  useEffect(() => {
+  // A layout effect, not a plain effect: it runs the moment the box is put on the page,
+  // before the browser paints it. A plain effect can run a frame later, and someone
+  // typing a list of choices quickly (Enter, then straight on) would have a keystroke
+  // land in the previous box in that gap.
+  useLayoutEffect(() => {
     if (autoFocus) {
       textareaRef.current?.focus();
     }

@@ -63,47 +63,67 @@ export function LogicDialog({ questions, initialQuestionId, editor, onClose }: L
     toast.success("All rules deleted");
   }
 
+  // Typeform's heading for this dialog is larger than a normal dialog title.
+  const header = (
+    <div className="px-7 pb-5 pt-5">
+      <p className="text-[24px] leading-[31px] text-admin-text">Logic</p>
+      <p className="mt-[9px] text-admin-muted">Set rules to control how respondents view or progress through your form.</p>
+    </div>
+  );
+
   return (
     <Modal
       isOpen
       onClose={onClose}
       title="Logic"
-      description="Set rules to control how respondents view or progress through your form."
       widthClass="max-w-[960px]"
-      tone="panel"
+      // As on Typeform: nearly the full height of the window, but never over 800px or under 500px.
+      heightClass="h-[min(calc(100vh-32px),800px)] min-h-[500px]"
+      header={header}
     >
-      <div className="flex min-h-[420px] flex-col gap-4 md:flex-row">
+      {/* The middle fills whatever height is left between the heading and the footer. */}
+      <div className="flex min-h-0 flex-1">
         {/* Left: every question; the picked one is highlighted. */}
-        <ul className="flex shrink-0 flex-col gap-1 md:w-[220px]">
-          {questions.map((question, index) => (
-            <li key={question.id}>
-              <button
-                type="button"
-                onClick={() => setPickedQuestionId(question.id)}
-                aria-pressed={question.id === pickedQuestion.id}
-                className={
-                  "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left " +
-                  (question.id === pickedQuestion.id ? "bg-admin-hover" : "hover:bg-admin-hover")
-                }
-              >
-                <QuestionTypeChip type={question.type} number={index + 1} />
-                <span className="line-clamp-1 flex-1 text-[13px] text-admin-muted">{stripFormatting(question.title)}</span>
-                {question.logic_jumps.length > 0 && (
-                  <GitBranch aria-label="Has branching rules" className="h-4 w-4 shrink-0 text-admin-muted" />
-                )}
-              </button>
-            </li>
-          ))}
+        <ul className="flex w-[248px] shrink-0 flex-col gap-1 overflow-y-auto px-4 pt-1">
+          {questions.map((question, index) => {
+            const isPicked = question.id === pickedQuestion.id;
+            return (
+              <li key={question.id}>
+                <button
+                  type="button"
+                  onClick={() => setPickedQuestionId(question.id)}
+                  aria-pressed={isPicked}
+                  className={
+                    "flex h-11 w-full items-center gap-2 rounded-lg pl-[15px] pr-[11px] text-left " +
+                    (isPicked ? "bg-admin-hover" : "hover:bg-admin-hover")
+                  }
+                >
+                  <QuestionTypeChip type={question.type} number={index + 1} />
+                  <span
+                    className={
+                      "line-clamp-1 flex-1 text-[13px] leading-[17px] " + (isPicked ? "text-admin-text" : "text-admin-muted")
+                    }
+                  >
+                    {stripFormatting(question.title)}
+                  </span>
+                  {question.logic_jumps.length > 0 && (
+                    <GitBranch aria-label="Has branching rules" className="h-4 w-4 shrink-0 text-admin-muted" />
+                  )}
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
-        {/* Right: the picked question and its three sections. */}
-        <div className="flex-1 rounded-xl bg-white p-6">
-          <div className="mb-5 flex items-center gap-3">
+        {/* Right: the picked question and its three sections. The white area runs to
+            the dialog's right edge, as in Typeform's. */}
+        <div className="min-w-0 flex-1 overflow-y-auto rounded-l-xl bg-white p-10">
+          <div className="mb-6 flex items-center gap-2">
             <QuestionTypeChip type={pickedQuestion.type} number={pickedIndex + 1} />
-            <span className="text-admin-text">{stripFormatting(pickedQuestion.title)}</span>
+            <span className="font-medium text-black">{stripFormatting(pickedQuestion.title)}</span>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             <LogicSection icon={EyeOff} title="Question display" badge={<ComingSoonBadge />} />
 
             <LogicSection
@@ -128,12 +148,12 @@ export function LogicDialog({ questions, initialQuestionId, editor, onClose }: L
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
+      <div className="flex h-14 shrink-0 items-center justify-between pl-4 pr-8">
         <button
           type="button"
           onClick={deleteAllRules}
           disabled={totalRules === 0}
-          className="flex h-8 items-center gap-2 rounded-lg px-2 text-danger-text hover:bg-admin-hover disabled:opacity-40"
+          className="flex h-8 items-center gap-2 rounded-lg px-2 font-medium text-danger-text hover:bg-admin-hover disabled:opacity-40"
         >
           <Trash2 aria-hidden="true" className="h-4 w-4" />
           Delete all rules
@@ -159,21 +179,19 @@ interface LogicSectionProps {
 /** One outlined, collapsible block of the dialog. */
 function LogicSection({ icon: Icon, title, badge, isOpen = false, onToggle, children }: LogicSectionProps) {
   return (
-    <section className="rounded-xl border border-admin-border">
+    <section className="rounded-lg border border-admin-border p-3">
       <button
         type="button"
         onClick={onToggle}
         disabled={onToggle === undefined}
         aria-expanded={isOpen}
-        className="flex h-14 w-full items-center gap-3 rounded-xl px-4 text-left text-admin-text enabled:hover:bg-admin-hover"
+        className="flex h-9 w-full items-center gap-2 rounded-lg px-3 text-left font-medium text-admin-muted enabled:hover:bg-admin-hover"
       >
-        <Icon aria-hidden="true" className="h-4 w-4 text-admin-muted" />
+        <Icon aria-hidden="true" className="h-4 w-4" />
         <span className="flex-1">{title}</span>
-        {badge ?? (
-          <ChevronDown aria-hidden="true" className={"h-4 w-4 text-admin-muted transition-transform " + (isOpen ? "rotate-180" : "")} />
-        )}
+        {badge ?? <ChevronDown aria-hidden="true" className={"h-4 w-4 transition-transform " + (isOpen ? "rotate-180" : "")} />}
       </button>
-      {isOpen && children !== undefined && <div className="border-t border-admin-border-soft p-4">{children}</div>}
+      {isOpen && children !== undefined && <div className="mt-3 border-t border-admin-border-soft px-3 pb-1 pt-4">{children}</div>}
     </section>
   );
 }

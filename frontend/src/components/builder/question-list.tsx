@@ -276,9 +276,15 @@ function QuestionCard({
 
       <div className="absolute right-2 top-[14px] opacity-0 focus-within:opacity-100 group-hover:opacity-100">
         <Menu
-          // Opens beside the card, as in Typeform, so it never covers the list.
+          // Opens beside the card, as in Typeform, so it never covers the list. The two
+          // offsets put it where Typeform's sits: its left edge 7px inside the card's
+          // right edge, its top 2px above the card's.
           side="right"
           align="start"
+          sideOffset={2}
+          alignOffset={-17}
+          // Only as wide as its longest item, like Typeform's.
+          sizeClassName="p-2"
           trigger={
             <button
               type="button"

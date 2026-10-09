@@ -10,10 +10,11 @@
 
 import type { LucideIcon } from "lucide-react";
 
-export function ComingSoonBadge() {
+/** `isShort` says just "Soon", for places too narrow for the two words. */
+export function ComingSoonBadge({ isShort = false }: { isShort?: boolean }) {
   return (
-    <span className="shrink-0 whitespace-nowrap rounded-full border border-admin-border px-2 py-[1px] text-[11px] leading-4 text-admin-muted">
-      Coming soon
+    <span className="shrink-0 whitespace-nowrap rounded-full border border-admin-border px-2 py-[1px] text-[11px] font-normal leading-4 text-admin-muted">
+      {isShort ? "Soon" : "Coming soon"}
     </span>
   );
 }

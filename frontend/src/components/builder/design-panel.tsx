@@ -4,22 +4,26 @@
  * design-panel.tsx — the floating Design panel: the form's theme.
  *
  * What it does:   laid out like Typeform's. The first view has two tabs: "My themes"
- *                 (this form's theme, with an Edit button) and "Gallery" (ready-made
- *                 themes). Edit opens "Design › My theme" with Font, Buttons and
- *                 Background tabs. The panel floats over the builder, can be dragged by
- *                 its grip, and the canvas behind it recolours live.
- * Depends on:     respondent/form-theme.tsx (font list), ui/button.tsx, lib/types.ts.
+ *                 (this form's theme as a small preview card) and "Gallery" (ready-made
+ *                 themes as the same cards). Clicking this form's card opens "Design ›
+ *                 My theme" with Font, Buttons and Background tabs. The panel floats
+ *                 over the builder, can be dragged by its grip, and the canvas behind
+ *                 it recolours live.
+ * Depends on:     respondent/form-theme.tsx (font list), ui/button.tsx, ui/menu.tsx,
+ *                 lib/types.ts.
  * Depended on by: builder-screen.tsx.
  *
  * Changes save themselves as they are made, like everything else in the builder, so
  * the button at the bottom of the editor is "Done", not "Save changes".
  */
 
-import { ChevronDown, ChevronRight, Droplet, GripVertical, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Droplet, GripVertical, MoreHorizontal, Pencil, X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 
 import { THEME_FONTS } from "@/components/respondent/form-theme";
 import { Button } from "@/components/ui/button";
+import { Menu, MenuItem } from "@/components/ui/menu";
 import type { FormDetail, FormUpdate, Theme } from "@/lib/types";
 
 interface DesignPanelProps {
@@ -75,6 +79,18 @@ function themeToUpdate(theme: Theme): FormUpdate {
     theme_button_text_color: theme.button_text_color,
     theme_font: theme.font,
   };
+}
+
+/** True when two themes have the same colours and font. */
+function isSameTheme(first: Theme, second: Theme): boolean {
+  return (
+    first.background_color.toUpperCase() === second.background_color.toUpperCase() &&
+    first.question_color.toUpperCase() === second.question_color.toUpperCase() &&
+    first.answer_color.toUpperCase() === second.answer_color.toUpperCase() &&
+    first.button_color.toUpperCase() === second.button_color.toUpperCase() &&
+    first.button_text_color.toUpperCase() === second.button_text_color.toUpperCase() &&
+    first.font === second.font
+  );
 }
 
 export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
@@ -150,10 +166,12 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
       ref={panelRef}
       aria-label="Design"
       style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
-      className="absolute left-[140px] top-[44px] z-30 w-[544px] max-w-[calc(100%-16px)] rounded-xl border border-admin-border bg-white p-2 shadow-[0_0_0_3px_var(--color-admin-ring)]"
+      className="absolute left-[140px] top-[44px] z-30 w-[544px] max-w-[calc(100%-16px)] rounded-xl border border-admin-border bg-white p-[7px] shadow-[0_0_0_3px_var(--color-admin-ring)]"
     >
-      <header className="flex h-10 items-center justify-between">
-        <div className="flex items-center gap-1 text-admin-text">
+      {/* 40px tall. The grip and the close button are 24px squares 12px from the
+          panel's corners; the title sits 2px lower. All measured on Typeform's panel. */}
+      <header className="flex h-10 items-start justify-between">
+        <div className="flex items-start gap-2 pl-1 pt-1 text-admin-text">
           <button
             type="button"
             aria-label="Drag to move the Design panel"
@@ -162,28 +180,28 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
             onPointerMove={continueDrag}
             onPointerUp={endDrag}
             // touch-none: on touch screens, dragging the grip must not scroll the page.
-            className="flex h-8 w-8 touch-none items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
+            className="flex h-6 w-6 touch-none items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
             style={{ cursor: "grab" }}
           >
             <GripVertical className="h-4 w-4" />
           </button>
           {isEditing ? (
-            <>
-              <button type="button" onClick={() => setIsEditing(false)} className="rounded-md px-1 text-admin-muted hover:underline">
+            <div className="flex items-center pt-[2px] font-medium text-admin-muted">
+              <button type="button" onClick={() => setIsEditing(false)} className="hover:underline">
                 Design
               </button>
-              <ChevronRight aria-hidden="true" className="h-3 w-3 text-admin-muted" />
-              <h2 className="px-1 font-medium">My theme</h2>
-            </>
+              <ChevronRight aria-hidden="true" className="mx-[2px] h-[13px] w-[13px]" />
+              <h2>My theme</h2>
+            </div>
           ) : (
-            <h2 className="px-1 font-medium">Design</h2>
+            <h2 className="pt-[2px] font-medium text-admin-active">Design</h2>
           )}
         </div>
         <button
           type="button"
           aria-label="Close design panel"
           onClick={onClose}
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
+          className="mr-1 mt-1 flex h-6 w-6 items-center justify-center rounded-lg text-admin-muted hover:bg-admin-hover"
         >
           <X className="h-4 w-4" />
         </button>
@@ -192,7 +210,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
       <div className="rounded-xl bg-admin-panel">
         {isEditing ? (
           <>
-            <div role="tablist" className="flex gap-6 border-b-2 border-white px-5">
+            <div role="tablist" className={TAB_STRIP_CLASSES}>
               <PanelTab label="Font" isActive={editorTab === "font"} onClick={() => setEditorTab("font")} />
               <PanelTab label="Buttons" isActive={editorTab === "buttons"} onClick={() => setEditorTab("buttons")} />
               <PanelTab label="Background" isActive={editorTab === "background"} onClick={() => setEditorTab("background")} />
@@ -206,7 +224,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
                     aria-label="Font"
                     value={form.theme.font}
                     onChange={(event) => onUpdate({ theme_font: event.target.value })}
-                    className="mt-3 h-8 w-full rounded-lg border border-admin-border bg-white/80 px-2 text-admin-muted"
+                    className="mt-4 h-8 w-full rounded-lg border border-admin-border bg-white/80 px-2 text-admin-muted"
                   >
                     {Object.keys(THEME_FONTS).map((fontName) => (
                       <option key={fontName} value={fontName}>
@@ -214,7 +232,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
                       </option>
                     ))}
                   </select>
-                  <h3 className="mt-5 border-t border-admin-border pt-5 font-medium text-admin-text">Color</h3>
+                  <h3 className="mb-2 mt-4 border-t border-admin-border pt-4 font-medium text-admin-text">Color</h3>
                   <ColorRow
                     label="Titles and questions"
                     value={form.theme.question_color}
@@ -225,7 +243,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
 
               {editorTab === "buttons" && (
                 <>
-                  <h3 className="font-medium text-admin-text">Color</h3>
+                  <h3 className="mb-2 font-medium text-admin-text">Color</h3>
                   <ColorRow label="Buttons" value={form.theme.button_color} onSave={(color) => onUpdate({ theme_button_color: color })} />
                   <ColorRow
                     label="Button text"
@@ -238,7 +256,7 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
 
               {editorTab === "background" && (
                 <>
-                  <h3 className="font-medium text-admin-text">Color</h3>
+                  <h3 className="mb-2 font-medium text-admin-text">Color</h3>
                   <ColorRow
                     label="Background"
                     value={form.theme.background_color}
@@ -250,41 +268,49 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
           </>
         ) : (
           <>
-            <div role="tablist" className="flex gap-6 border-b-2 border-white px-5">
+            <div role="tablist" className={TAB_STRIP_CLASSES}>
               <PanelTab label="My themes" isActive={homeTab === "my-themes"} onClick={() => setHomeTab("my-themes")} />
               <PanelTab label="Gallery" isActive={homeTab === "gallery"} onClick={() => setHomeTab("gallery")} />
             </div>
 
             {homeTab === "my-themes" ? (
-              <div className="flex items-center justify-between px-5 py-4">
-                <span className="flex items-center gap-3 text-admin-text">
-                  {/* A small preview of the current theme: background with a button-coloured bar. */}
-                  <span
-                    aria-hidden="true"
-                    className="flex h-10 w-14 items-end rounded-lg border border-admin-border p-2"
-                    style={{ backgroundColor: form.theme.background_color }}
-                  >
-                    <span className="h-2 w-6 rounded-full" style={{ backgroundColor: form.theme.button_color }} />
-                  </span>
-                  My theme
-                </span>
-                <Button onClick={() => setIsEditing(true)}>Edit</Button>
+              <div className="px-5 pb-2 pt-5">
+                <h3 className="font-medium text-admin-text">My themes</h3>
+                {/* A form has one theme of its own. Clicking its card opens the editor. */}
+                <div className="mt-[22px] grid grid-cols-2 gap-4">
+                  <ThemeCard name="My theme" theme={form.theme} isSelected={false} onPick={() => setIsEditing(true)}>
+                    <Menu
+                      align="start"
+                      sizeClassName="p-2"
+                      trigger={
+                        <button
+                          type="button"
+                          aria-label="Theme actions"
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-admin-muted hover:bg-admin-hover"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      }
+                    >
+                      <MenuItem onSelect={() => setIsEditing(true)}>
+                        <Pencil aria-hidden="true" className="h-4 w-4" />
+                        Edit
+                      </MenuItem>
+                    </Menu>
+                  </ThemeCard>
+                </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2 p-4">
+              // As tall as Typeform's list, then it scrolls.
+              <div className="grid max-h-[438px] grid-cols-2 gap-4 overflow-y-auto px-5 pb-2 pt-4">
                 {GALLERY_THEMES.map((item) => (
-                  <button
+                  <ThemeCard
                     key={item.name}
-                    type="button"
-                    onClick={() => onUpdate(themeToUpdate(item.theme))}
-                    className="rounded-lg border border-admin-border p-3 text-left hover:border-admin-text"
-                    style={{ backgroundColor: item.theme.background_color }}
-                  >
-                    <span className="block text-[13px] font-medium" style={{ color: item.theme.question_color }}>
-                      {item.name}
-                    </span>
-                    <span className="mt-3 block h-2 w-10 rounded-full" style={{ backgroundColor: item.theme.button_color }} />
-                  </button>
+                    name={item.name}
+                    theme={item.theme}
+                    isSelected={isSameTheme(item.theme, form.theme)}
+                    onPick={() => onUpdate(themeToUpdate(item.theme))}
+                  />
                 ))}
               </div>
             )}
@@ -303,6 +329,9 @@ export function DesignPanel({ form, onUpdate, onClose }: DesignPanelProps) {
   );
 }
 
+// The strip the tabs sit in: 48px, then a 2px white line under it.
+const TAB_STRIP_CLASSES = "flex h-[50px] items-start gap-[2px] border-b-2 border-white px-2";
+
 function PanelTab({ label, isActive, onClick }: { label: string; isActive: boolean; onClick: () => void }) {
   return (
     <button
@@ -310,11 +339,55 @@ function PanelTab({ label, isActive, onClick }: { label: string; isActive: boole
       role="tab"
       aria-selected={isActive}
       onClick={onClick}
-      className={"relative h-12 font-medium " + (isActive ? "text-admin-active" : "text-admin-muted hover:text-admin-active")}
+      className={
+        "relative mt-[10px] h-7 rounded-lg px-2 font-medium " +
+        (isActive ? "text-admin-active" : "text-admin-muted hover:text-admin-active")
+      }
     >
       {label}
-      {isActive && <span className="absolute inset-x-0 -bottom-[2px] h-[2px] bg-admin-active" />}
+      {/* The marker of the open tab: a 3px bar under its text, at the bottom of the strip. */}
+      {isActive && <span className="absolute inset-x-2 -bottom-[10px] h-[3px] bg-admin-active" />}
     </button>
+  );
+}
+
+interface ThemeCardProps {
+  name: string;
+  theme: Theme;
+  /** Draws the dark outline that marks the theme the form is using. */
+  isSelected: boolean;
+  onPick: () => void;
+  /** An optional "..." menu, placed at the right of the name. */
+  children?: ReactNode;
+}
+
+/**
+ * A theme shown the way Typeform shows one: a small sample in the theme's own colours
+ * (the words "Question" and "Answer" and a block in the button colour), with the
+ * theme's name underneath.
+ */
+function ThemeCard({ name, theme, isSelected, onPick, children }: ThemeCardProps) {
+  return (
+    <div
+      className={
+        "relative overflow-hidden rounded-xl bg-white " +
+        (isSelected ? "shadow-[0_0_0_2px_var(--color-admin-text)]" : "shadow-[0_0_0_1px_var(--color-admin-border)]")
+      }
+    >
+      <button type="button" aria-label={`${name} theme`} aria-pressed={isSelected} onClick={onPick} className="block w-full text-left">
+        <span className="block h-[110px] p-5" style={{ backgroundColor: theme.background_color }}>
+          <span className="block font-medium leading-5" style={{ color: theme.question_color }}>
+            Question
+          </span>
+          <span className="block leading-5" style={{ color: theme.answer_color }}>
+            Answer
+          </span>
+          <span className="mt-3 block h-[18px] w-10 rounded-[4px]" style={{ backgroundColor: theme.button_color }} />
+        </span>
+        <span className="flex h-12 items-center px-2 font-medium text-admin-text">{name}</span>
+      </button>
+      {children !== undefined && <div className="absolute bottom-2 right-2">{children}</div>}
+    </div>
   );
 }
 
@@ -372,7 +445,7 @@ function ColorRow({ label, value, onSave }: ColorRowProps) {
         aria-label={`${label} colour`}
         aria-expanded={isOpen}
         onClick={() => (isOpen ? setIsOpen(false) : open())}
-        className="flex h-8 items-center gap-2 rounded-lg border border-admin-border bg-white/80 px-2"
+        className="flex h-8 items-center gap-2 rounded-[4px] border border-admin-border bg-white px-1"
       >
         <Droplet aria-hidden="true" className="h-4 w-4" style={{ fill: value, color: "#3c323e" }} />
         <ChevronDown aria-hidden="true" className="h-4 w-4 text-admin-muted" />

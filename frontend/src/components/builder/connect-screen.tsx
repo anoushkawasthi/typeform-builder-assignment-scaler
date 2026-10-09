@@ -153,28 +153,34 @@ export function ConnectScreen({ formId }: { formId: number }) {
         onRename={(title) => editor.updateForm({ title })}
       />
 
-      {/* Sub-tabs: small capitals with wide spacing, as on Typeform's Connect page. */}
-      <div role="tablist" className="flex gap-6 border-t border-admin-border px-4 md:px-[208px]">
-        <SubTab label="Integrations" isActive={activeTab === "integrations"} onClick={() => setActiveTab("integrations")} />
-        <SubTab label="Webhooks" isActive={activeTab === "webhooks"} onClick={() => setActiveTab("webhooks")} />
+      {/* Sub-tabs: small capitals with wide spacing, as on Typeform's Connect page.
+          Like the content below, they sit in a column at most 1024px wide in the middle
+          of the window, so the page looks the same on a large monitor. */}
+      <div className="border-t-[3px] border-admin-panel px-4">
+        <div role="tablist" className="mx-auto flex max-w-[1024px] gap-6 px-2">
+          <SubTab label="Integrations" isActive={activeTab === "integrations"} onClick={() => setActiveTab("integrations")} />
+          <SubTab label="Webhooks" isActive={activeTab === "webhooks"} onClick={() => setActiveTab("webhooks")} />
+        </div>
       </div>
 
-      <main className="flex-1 bg-admin-panel px-4 py-12 md:px-[200px]">
+      {/* Typeform draws this page in an older style than the rest of the app: near-black
+          neutral text (#262627) and squarer corners. */}
+      <main className="flex-1 bg-admin-panel px-4 py-12 text-[#262627]">
         {activeTab === "integrations" ? (
-          <div className="flex flex-col gap-10 lg:flex-row lg:gap-16">
+          <div className="mx-auto flex max-w-[1024px] flex-col gap-10 lg:flex-row lg:gap-16">
             {/* Left: heading, search, categories. */}
             <div className="shrink-0 lg:w-[256px]">
-              <h1 className="text-[24px] leading-8 text-admin-text">Connect your form to your favorite apps</h1>
-              <p className="mt-2 text-admin-text">Create automated, efficient workflows that work for you.</p>
+              <h1 className="text-[24px] font-light leading-8">Connect your form to your favorite apps</h1>
+              <p className="mt-2">Create automated, efficient workflows that work for you.</p>
 
-              <label className="mt-6 flex h-10 items-center gap-2 border border-admin-muted/60 bg-white px-3">
+              <label className="mt-6 flex h-10 items-center gap-2 rounded border border-[#BBBBBB] bg-white px-3">
                 <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-admin-muted" />
                 <input
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="Search integrations"
                   aria-label="Search integrations"
-                  className="w-full bg-transparent text-[16px] text-admin-text outline-none placeholder:text-admin-muted"
+                  className="w-full bg-transparent text-[16px] leading-6 outline-none placeholder:text-admin-muted"
                 />
                 {searchText !== "" && (
                   <button type="button" aria-label="Clear search" onClick={() => setSearchText("")}>
@@ -183,8 +189,8 @@ export function ConnectScreen({ formId }: { formId: number }) {
                 )}
               </label>
 
-              <h2 className="mb-3 mt-7 text-[16px] text-admin-text">Categories</h2>
-              <ul>
+              <h2 className="mb-2 mt-6 text-[16px] font-medium leading-6">Categories</h2>
+              <ul className="flex flex-col gap-1">
                 {categories.map((categoryName) => (
                   <li key={categoryName}>
                     <button
@@ -192,12 +198,12 @@ export function ConnectScreen({ formId }: { formId: number }) {
                       onClick={() => setCategory(categoryName)}
                       aria-pressed={category === categoryName}
                       className={
-                        "flex h-9 w-full items-center justify-between px-3 text-left text-admin-text " +
+                        "flex h-8 w-full items-center justify-between px-3 text-left " +
                         (category === categoryName ? "bg-[#E3E3E3]" : "hover:bg-admin-hover")
                       }
                     >
                       {categoryName}
-                      <span className="text-[12px] text-admin-muted">{countIn(categoryName)}</span>
+                      <span className="text-[12px]">{countIn(categoryName)}</span>
                     </button>
                   </li>
                 ))}
@@ -207,7 +213,7 @@ export function ConnectScreen({ formId }: { formId: number }) {
             {/* Right: one card per integration. */}
             <ul className="flex min-w-0 flex-1 flex-col gap-4">
               {visibleIntegrations.map((integration) => (
-                <li key={integration.name} className="flex items-center gap-8 rounded-lg bg-white p-8 shadow-[0_1px_3px_rgba(60,50,62,0.08)]">
+                <li key={integration.name} className="flex items-center gap-8 rounded-lg bg-white p-8 shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
                   <span
                     aria-hidden="true"
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-admin-text"
@@ -216,8 +222,8 @@ export function ConnectScreen({ formId }: { formId: number }) {
                     <integration.icon className="h-5 w-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[16px] text-admin-text">{integration.name}</span>
-                    <span className="mt-1 block text-admin-text">{integration.description}</span>
+                    <span className="block text-[16px] font-medium leading-6">{integration.name}</span>
+                    <span className="mt-1 block">{integration.description}</span>
                   </span>
                   <button
                     type="button"
@@ -234,7 +240,7 @@ export function ConnectScreen({ formId }: { formId: number }) {
             </ul>
           </div>
         ) : (
-          <div className="mx-auto max-w-[704px] rounded-lg bg-white p-12 text-center shadow-[0_1px_3px_rgba(60,50,62,0.08)]">
+          <div className="mx-auto max-w-[704px] rounded-lg bg-white p-12 text-center shadow-[0_2px_4px_rgba(0,0,0,0.08)]">
             <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#DDD6FA] text-admin-text">
               <Webhook aria-hidden="true" className="h-6 w-6" />
             </span>
@@ -260,12 +266,12 @@ function SubTab({ label, isActive, onClick }: { label: string; isActive: boolean
       aria-selected={isActive}
       onClick={onClick}
       className={
-        "relative h-[50px] text-[12px] uppercase tracking-[0.1em] " +
-        (isActive ? "text-admin-text" : "text-admin-muted hover:text-admin-text")
+        "relative h-12 text-[12px] font-medium uppercase tracking-[1.2px] " +
+        (isActive ? "text-[#262627]" : "text-[#898989] hover:text-[#262627]")
       }
     >
       {label}
-      {isActive && <span className="absolute inset-x-0 bottom-0 h-[2px] bg-admin-text" />}
+      {isActive && <span className="absolute inset-x-0 bottom-0 h-[2px] bg-[#262627]" />}
     </button>
   );
 }
