@@ -28,8 +28,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full">
+    // Browser extensions (Grammarly, ColorZilla, Dark Reader…) add attributes to <html>
+    // and <body> before React loads. suppressHydrationWarning ignores attribute
+    // differences on these two tags only; their children are still checked.
+    <html lang="en" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
+      <body className="min-h-full" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

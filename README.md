@@ -72,7 +72,7 @@ Requirements: Python 3.12+ and Node.js 20+.
 # 1. Backend  ->  http://localhost:8000  (API docs at /docs)
 cd backend
 python -m venv .venv
-source .venv/bin/activate            # Windows: .venv\Scripts\activate
+.venv\Scripts\activate          
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 
